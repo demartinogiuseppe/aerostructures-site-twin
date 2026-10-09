@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aerostructures Site Twin</title>
+<meta name="description" content="Concept dashboard for an aerostructures plant: a 3D site map with department health and friction points, and a 3D fuselage pulse line linked to takt, quality and NCR data. Made-up demo data.">
+<meta property="og:title" content="Aerostructures Site Twin · interactive 3D dashboard">
+<meta property="og:description" content="A 3D plant map shows which departments are on target and where friction slows the line. Click into final assembly to inspect the fuselage pulse line. Concept demo with made-up data.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: hangar-at-night blueprint. Header, a full-width 3D stage (site map or pulse line) with an inspector, then the dashboard. */
+:root {
+  --bg: #0a0f13;
+  --panel: #10171d;
+  --panel-2: #151e26;
+  --line: #1f2c36;
+  --fg: #e7eef3;
+  --muted: #8c9ba8;
+  --accent: #5ec8f2;
+  --accent-2: #b9a6ff;
+  --ok: #4dd4a3;
+  --warn: #f3c64d;
+  --bad: #ff6363;
+  --grid: #1b2731;
+  --f-display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --r: 10px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--bg); }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1240px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 40px); padding-block: clamp(20px, 4vw, 44px) 48px; display: grid; gap: clamp(28px, 4vw, 44px); }
+
+.head { display: grid; gap: 10px; }
+.eyebrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-family: var(--f-mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; color: var(--accent); letter-spacing: .04em; }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: clamp(36px, 6vw, 64px); line-height: 1; letter-spacing: -.01em; text-wrap: balance; }
+.take { margin: 0; max-width: 70ch; color: var(--muted); font-size: 16px; }
+.take b { color: var(--fg); font-weight: 500; }
+
+/* Stage */
+.stage { position: relative; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 40%, rgba(94,200,242,.07), transparent 60%), var(--panel); }
+.stage-canvas { position: relative; height: clamp(420px, 56vw, 640px); }
+.stage-canvas canvas { display: block; width: 100% !important; height: 100% !important; outline: none; }
+.stage-canvas.is-hover canvas { cursor: pointer; }
+.fade { position: absolute; inset: 0; background: var(--panel); opacity: 0; pointer-events: none; transition: opacity .28s ease; }
+.fade.on { opacity: 1; }
+.tags { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.tag { position: absolute; left: 0; top: 0; pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: 999px; border: 1px solid var(--line); background: rgba(10,15,19,.84); color: var(--fg); font: 500 12px/1.4 var(--f-mono); white-space: nowrap; cursor: pointer; transition: border-color .2s, background .2s, opacity .3s; }
+.tag i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.tag span { color: var(--muted); }
+.tag.is-friction { color: var(--warn); border-color: rgba(243,198,77,.45); }
+.tag:hover, .tag.is-active { border-color: var(--accent); background: rgba(16,23,29,.96); }
+.tag:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.crumbs { position: absolute; left: 16px; top: 14px; display: flex; align-items: center; gap: 10px; font: 500 12.5px/1.4 var(--f-mono); color: var(--muted); }
+.crumbs button { all: unset; cursor: pointer; color: var(--accent); padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: rgba(10,15,19,.84); }
+.crumbs button:hover { border-color: var(--accent); }
+.crumbs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.stage-foot { position: absolute; left: 16px; right: 16px; bottom: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; font: 12px/1.4 var(--f-mono); color: var(--muted); pointer-events: none; }
+.legend3d { display: flex; flex-wrap: wrap; gap: 14px; }
+.legend3d span { display: inline-flex; align-items: center; gap: 6px; }
+.legend3d i { width: 8px; height: 8px; border-radius: 50%; }
+.legend3d i.bar { width: 14px; height: 3px; border-radius: 2px; }
+.no-3d { display: grid; place-items: center; color: var(--muted); font-family: var(--f-mono); font-size: 13px; text-align: center; padding: 24px; }
+
+/* Inspector */
+.inspector { position: absolute; right: 16px; top: 16px; width: min(340px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; background: rgba(13,19,24,.93); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 12px; align-content: start; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.insp-top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.insp-code { font: 500 12px/1.4 var(--f-mono); color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.insp-name { font-family: var(--f-display); font-size: 26px; font-weight: 500; line-height: 1.1; margin-top: 2px; text-wrap: balance; }
+.insp-close { all: unset; cursor: pointer; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 6px; color: var(--muted); font-size: 18px; flex: none; }
+.insp-close:hover { background: var(--panel-2); color: var(--fg); }
+.insp-close:focus-visible { outline: 2px solid var(--accent); }
+.insp-big { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+.insp-big strong { font-family: var(--f-display); font-weight: 500; font-size: 48px; line-height: 1; font-variant-numeric: tabular-nums; }
+.insp-big span { color: var(--muted); font-size: 13px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13px; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+.insp-list { display: grid; gap: 0; font-size: 12.5px; }
+.insp-row { all: unset; box-sizing: border-box; cursor: default; display: grid; grid-template-columns: auto 1fr auto; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); }
+button.insp-row { cursor: pointer; }
+button.insp-row:hover { color: var(--accent); }
+button.insp-row:focus-visible { outline: 2px solid var(--accent); }
+.insp-row .mono { color: var(--muted); font: 11.5px/1.5 var(--f-mono); }
+.btn { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font: 500 13px/1 var(--f-body); color: var(--accent); padding: 8px 0; }
+.btn:hover { text-decoration: underline; }
+.btn.primary { color: var(--bg); background: var(--accent); padding: 10px 14px; border-radius: 8px; }
+.btn.primary:hover { text-decoration: none; filter: brightness(1.1); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.sub { margin: 0; color: var(--muted); font-size: 13px; }
+.over { color: var(--bad); } .under { color: var(--ok); }
+@media (max-width: 760px) {
+  .inspector { position: static; width: auto; max-height: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: var(--panel); backdrop-filter: none; }
+  .stage-canvas { height: 400px; }
+  #stage-hint { display: none; }
+  .tag span { display: none; }
+}
+
+/* Status */
+.pill { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1.4 var(--f-body); white-space: nowrap; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.s-ok { color: var(--ok); } .s-warn { color: var(--warn); } .s-bad { color: var(--bad); }
+.bar { height: 6px; border-radius: 3px; background: var(--grid); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 3px; }
+
+/* Dashboard */
+.part { display: grid; gap: clamp(20px, 3vw, 28px); }
+.part-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.part-head .k { font: 500 12px/1.4 var(--f-mono); color: var(--accent); letter-spacing: .1em; text-transform: uppercase; }
+.part-head h2 { font-size: 30px; }
+.section { display: grid; gap: 14px; }
+.sec-head { display: grid; gap: 4px; }
+h2, h3 { margin: 0; font-family: var(--f-display); font-weight: 500; line-height: 1.15; }
+h3 { font-size: 22px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; min-width: 0; }
+.card .sec-head { margin-bottom: 16px; }
+
+.depts { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
+.dept, .st { all: unset; box-sizing: border-box; position: relative; cursor: pointer; display: grid; gap: 6px; align-content: start; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; min-width: 0; transition: border-color .2s, background .2s; }
+.dept:hover, .st:hover { background: var(--panel-2); }
+.dept:focus-visible, .st:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dept.is-active, .st.is-active { border-color: var(--accent); background: var(--panel-2); }
+.dept[data-status="Below target"]:not(.is-active), .st[data-status="Stopped"]:not(.is-active) { border-color: rgba(255,99,99,.55); }
+.d-top, .st-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.d-code, .st-code { font: 500 12px/1.4 var(--f-mono); color: var(--muted); letter-spacing: .06em; }
+.d-name, .st-name { font-weight: 500; }
+.d-metric { font-size: 12.5px; color: var(--muted); }
+.d-val { display: flex; align-items: baseline; gap: 8px; }
+.d-val strong, .st-pct { font-family: var(--f-display); font-size: 30px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.d-val span { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.st-sec { font: 12px/1.4 var(--f-mono); color: var(--muted); }
+.st-meta { font-size: 12.5px; color: var(--muted); }
+
+.frictions { display: grid; gap: 0; }
+.fr { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: minmax(0, 13rem) minmax(0, 1fr) minmax(5rem, 14rem) auto; gap: 14px; align-items: center; padding: 12px 6px; border-top: 1px solid var(--line); font-size: 13.5px; }
+.fr:first-child { border-top: 0; }
+.fr:hover, .fr.is-active { background: var(--panel-2); }
+.fr:focus-visible { outline: 2px solid var(--accent); }
+.fr-route { font: 500 12.5px/1.4 var(--f-mono); color: var(--warn); }
+.fr-issue { min-width: 0; }
+.fr-issue small { display: block; color: var(--muted); font-size: 12.5px; }
+.fr-v { font: 12.5px var(--f-mono); text-align: right; min-width: 4.5em; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .fr { grid-template-columns: 1fr auto; } .fr .track { grid-column: 1 / -1; } }
+
+.tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+.tile { display: grid; gap: 4px; align-content: start; }
+.tile-label { font-weight: 500; }
+.tile-def { color: var(--muted); font-size: 12.5px; min-height: 2.7em; }
+.tile-big { font-family: var(--f-display); font-weight: 500; font-size: 40px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tile-delta { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.good { color: var(--ok); } .bad { color: var(--bad); }
+.spark { height: 36px; margin-top: 4px; }
+
+.line-wrap { container-type: inline-size; }
+.stations { display: grid; gap: 12px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.st:not(:last-child)::after { content: "›"; position: absolute; right: -6px; top: 50%; transform: translate(50%, -50%); color: var(--muted); font-size: 20px; }
+@container (max-width: 820px) {
+  .stations { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+  .st::after { display: none; }
+}
+
+.grid2 { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
+.trend { position: relative; min-height: 240px; }
+.trend svg { display: block; overflow: visible; }
+.tick { fill: var(--muted); font: 11.5px var(--f-mono); }
+.endlab { font: 500 12px var(--f-mono); }
+.tip { position: absolute; top: 0; left: 0; pointer-events: none; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.4); padding: 6px 10px; font: 12px/1.5 var(--f-mono); white-space: nowrap; }
+.tip-h { color: var(--muted); }
+.tip-r { display: flex; align-items: center; gap: 6px; }
+.tip-r i { width: 8px; height: 8px; border-radius: 2px; }
+.rows { display: grid; gap: 10px; align-content: start; }
+.row { display: grid; grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13px; }
+.row-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-v { text-align: right; min-width: 5em; font: 12.5px var(--f-mono); font-variant-numeric: tabular-nums; }
+.track { position: relative; height: 14px; }
+.track b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+.track u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--fg); border-radius: 1px; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; font-size: 12.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; border-radius: 2px; }
+
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
+.search { flex: 1 1 14rem; min-width: 0; font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); }
+.search:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.filter-chip { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font: 500 12.5px/1 var(--f-mono); padding: 7px 10px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); }
+.filter-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tablebox { max-height: 26rem; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th { position: sticky; top: 0; background: var(--panel); text-align: left; font-weight: 500; border-bottom: 1px solid var(--line); padding: 0; white-space: nowrap; }
+th button { all: unset; cursor: pointer; display: block; padding: 8px 10px; }
+th button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+th[aria-sort="ascending"] button::after { content: " ↑"; color: var(--muted); }
+th[aria-sort="descending"] button::after { content: " ↓"; color: var(--muted); }
+td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.mono { font: 12.5px var(--f-mono); }
+.r { text-align: right; }
+td.late { color: var(--warn); }
+.empty { color: var(--muted); padding: 16px 10px; }
+.foot { margin: 0; color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 18px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow"><span>Aerostructures plant · Digital twin</span><span class="chip">Concept demo</span></div>
+    <h1>Aerostructures Site Twin</h1>
+    <p class="take" id="summary"></p>
+  </header>
+
+  <section class="stage" id="stage" aria-label="Interactive 3D view">
+    <div class="stage-canvas" id="stage-canvas">
+      <div class="tags" id="tags"></div>
+      <div class="crumbs" id="crumbs"></div>
+      <div class="stage-foot"><div class="legend3d" id="legend3d"></div><div id="stage-hint"></div></div>
+      <div class="fade" id="fade"></div>
+    </div>
+    <aside class="inspector" id="inspector" aria-live="polite"></aside>
+  </section>
+
+  <div class="part" id="site">
+    <div class="part-head"><span class="k">Site</span><h2>Departments and friction</h2></div>
+    <section class="section">
+      <div class="sec-head">
+        <h3>Department health</h3>
+        <p class="sub">Each department against its own target. Red means below target.</p>
+      </div>
+      <div class="depts" id="depts"></div>
+    </section>
+    <div class="card">
+      <div class="sec-head">
+        <h3>Friction points</h3>
+        <p class="sub">Where one department is slowing another, with line hours lost over the last 8 weeks. The arrow points to the department that waits.</p>
+      </div>
+      <div class="frictions" id="frictions"></div>
+    </div>
+  </div>
+
+  <div class="part" id="line">
+    <div class="part-head"><span class="k">Final assembly</span><h2>Fuselage pulse line</h2></div>
+    <section class="section">
+      <div class="sec-head">
+        <h3>This week's indicators</h3>
+        <p class="sub" id="kpi-sub"></p>
+      </div>
+      <div class="tiles" id="tiles"></div>
+    </section>
+
+    <section class="section line-wrap">
+      <div class="sec-head">
+        <h3>Line status</h3>
+        <p class="sub">Sections move from S1 to S5 at every pulse. Takt time is 5 working days per station.</p>
+      </div>
+      <div class="stations" id="stations"></div>
+    </section>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="sec-head">
+          <h3>Quality and takt adherence</h3>
+          <p class="sub">Last 9 weeks. The dashed line is the 90% takt target.</p>
+        </div>
+        <div class="trend" id="trend"></div>
+      </div>
+      <div class="card">
+        <div class="sec-head">
+          <h3>Delay causes</h3>
+          <p class="sub">Line hours lost over the last 8 weeks, largest cause first</p>
+        </div>
+        <div class="rows" id="causes"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <h3>Actual vs standard hours</h3>
+        <p class="sub">Section currently in work at each station. Red bars have gone over standard.</p>
+      </div>
+      <div class="rows" id="hours"></div>
+      <div class="legend"><span><i style="width:13px;height:9px;background:var(--accent)"></i>Actual hours</span><span><i style="width:2px;height:14px;background:var(--fg)"></i>Standard hours</span></div>
+    </div>
+
+    <div class="card" id="ncr-log">
+      <div class="sec-head">
+        <h3>Non-conformance log</h3>
+        <p class="sub">NCRs from the last 4 weeks. Orange marks NCRs open for more than 14 days.</p>
+      </div>
+      <div class="tools">
+        <input class="search" id="ncr-search" type="search" placeholder="Search by part, defect, station…" aria-label="Search the log">
+        <label class="toggle"><input type="checkbox" id="ncr-open"> Open only</label>
+        <button class="filter-chip" id="ncr-chip" type="button" hidden></button>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr>
+            <th data-k="ncr"><button type="button">NCR</button></th>
+            <th data-k="opened_on"><button type="button">Opened</button></th>
+            <th data-k="station"><button type="button">Station</button></th>
+            <th data-k="part"><button type="button">Part</button></th>
+            <th data-k="defect"><button type="button">Defect</button></th>
+            <th data-k="disposition"><button type="button">Disposition</button></th>
+            <th data-k="status"><button type="button">Status</button></th>
+            <th data-k="days_open" class="r"><button type="button">Days open</button></th>
+          </tr></thead>
+          <tbody id="ncr-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">Concept demo. The plant, the departments and every number on this page are made up. No reference to real programs, manufacturers or aircraft.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_completed": 4, "fpy": 0.872, "takt_adherence": 0.71, "open_ncrs": 31, "traveled_work_hours": 412, "on_time_delivery": 0.8}, {"week": "W34", "week_start": "2026-08-17", "sections_completed": 5, "fpy": 0.881, "takt_adherence": 0.75, "open_ncrs": 29, "traveled_work_hours": 386, "on_time_delivery": 1.0}, {"week": "W35", "week_start": "2026-08-24", "sections_completed": 3, "fpy": 0.869, "takt_adherence": 0.73, "open_ncrs": 33, "traveled_work_hours": 431, "on_time_delivery": 0.75}, {"week": "W36", "week_start": "2026-08-31", "sections_completed": 5, "fpy": 0.894, "takt_adherence": 0.8, "open_ncrs": 27, "traveled_work_hours": 352, "on_time_delivery": 1.0}, {"week": "W37", "week_start": "2026-09-07", "sections_completed": 4, "fpy": 0.902, "takt_adherence": 0.78, "open_ncrs": 26, "traveled_work_hours": 340, "on_time_delivery": 1.0}, {"week": "W38", "week_start": "2026-09-14", "sections_completed": 5, "fpy": 0.897, "takt_adherence": 0.84, "open_ncrs": 24, "traveled_work_hours": 298, "on_time_delivery": 0.83}, {"week": "W39", "week_start": "2026-09-21", "sections_completed": 5, "fpy": 0.911, "takt_adherence": 0.86, "open_ncrs": 22, "traveled_work_hours": 271, "on_time_delivery": 1.0}, {"week": "W40", "week_start": "2026-09-28", "sections_completed": 6, "fpy": 0.918, "takt_adherence": 0.83, "open_ncrs": 23, "traveled_work_hours": 289, "on_time_delivery": 1.0}, {"week": "W41", "week_start": "2026-10-05", "sections_completed": 5, "fpy": 0.924, "takt_adherence": 0.88, "open_ncrs": 19, "traveled_work_hours": 236, "on_time_delivery": 1.0}], "stations": [{"station": "S1", "name": "Panel join", "section": "SEC-142", "progress": 0.92, "actual_hours": 318, "standard_hours": 300, "status": "On track", "note": "Longitudinal riveting almost complete"}, {"station": "S2", "name": "Frames and stringers", "section": "SEC-141", "progress": 0.64, "actual_hours": 402, "standard_hours": 360, "status": "Delayed", "note": "2 NCRs on frames awaiting disposition"}, {"station": "S3", "name": "Electrical installation", "section": "SEC-140", "progress": 0.81, "actual_hours": 275, "standard_hours": 290, "status": "On track", "note": "Harnesses routed, continuity test tomorrow"}, {"station": "S4", "name": "Systems and piping", "section": "SEC-139", "progress": 0.38, "actual_hours": 344, "standard_hours": 250, "status": "Stopped", "note": "Shortage: hydraulic bracket kit"}, {"station": "S5", "name": "Test and close-out", "section": "SEC-138", "progress": 0.97, "actual_hours": 188, "standard_hours": 200, "status": "On track", "note": "Final inspection and FOD check"}], "causes": [{"cause": "Parts shortage", "hours_lost": 186}, {"cause": "NCR awaiting disposition", "hours_lost": 142}, {"cause": "Waiting for quality inspection", "hours_lost": 97}, {"cause": "Tooling unavailable", "hours_lost": 71}, {"cause": "Engineering changes", "hours_lost": 54}, {"cause": "Certified staff absent", "hours_lost": 38}, {"cause": "Other", "hours_lost": 22}], "ncrs": [{"ncr": "NCR-26-1200", "opened_on": "2026-10-08", "station": "S2", "part": "Frame", "defect": "Insufficient edge distance", "disposition": "Rework", "status": "Closed", "days_open": 1}, {"ncr": "NCR-26-1183", "opened_on": "2026-10-04", "station": "S2", "part": "Stringer", "defect": "Excessive gap at joint", "disposition": "Pending", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1187", "opened_on": "2026-10-04", "station": "S1", "part": "Splice clip", "defect": "Missing sealant", "disposition": "Use as is", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1191", "opened_on": "2026-10-04", "station": "S3", "part": "Harness support", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1193", "opened_on": "2026-10-04", "station": "S5", "part": "Skin panel", "defect": "Non-conforming rivet", "disposition": "Pending", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1188", "opened_on": "2026-10-01", "station": "S2", "part": "Harness support", "defect": "Hole out of tolerance", "disposition": "Use as is", "status": "Open", "days_open": 8}, {"ncr": "NCR-26-1185", "opened_on": "2026-09-29", "station": "S2", "part": "Frame", "defect": "Missing sealant", "disposition": "Pending", "status": "Open", "days_open": 10}, {"ncr": "NCR-26-1189", "opened_on": "2026-09-29", "station": "S1", "part": "Harness support", "defect": "Hole out of tolerance", "disposition": "Repair", "status": "Closed", "days_open": 10}, {"ncr": "NCR-26-1196", "opened_on": "2026-09-27", "station": "S3", "part": "Doubler", "defect": "Non-conforming rivet", "disposition": "Scrap", "status": "Open", "days_open": 12}, {"ncr": "NCR-26-1180", "opened_on": "2026-09-26", "station": "S3", "part": "Splice clip", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1181", "opened_on": "2026-09-26", "station": "S4", "part": "Skin panel", "defect": "Insufficient edge distance", "disposition": "Pending", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1198", "opened_on": "2026-09-26", "station": "S2", "part": "Harness support", "defect": "Excessive gap at joint", "disposition": "Pending", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1192", "opened_on": "2026-09-21", "station": "S3", "part": "Door surround", "defect": "Scratch on surface treatment", "disposition": "Rework", "status": "Closed", "days_open": 18}, {"ncr": "NCR-26-1201", "opened_on": "2026-09-21", "station": "S2", "part": "Frame", "defect": "Insufficient edge distance", "disposition": "Repair", "status": "Closed", "days_open": 18}, {"ncr": "NCR-26-1195", "opened_on": "2026-09-19", "station": "S2", "part": "Systems bracket", "defect": "Torque out of spec", "disposition": "Pending", "status": "Open", "days_open": 20}, {"ncr": "NCR-26-1184", "opened_on": "2026-09-18", "station": "S1", "part": "Skin panel", "defect": "Torque out of spec", "disposition": "Use as is", "status": "Closed", "days_open": 21}, {"ncr": "NCR-26-1182", "opened_on": "2026-09-17", "station": "S1", "part": "Doubler", "defect": "Scratch on surface treatment", "disposition": "Pending", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1190", "opened_on": "2026-09-17", "station": "S2", "part": "Skin panel", "defect": "Non-conforming rivet", "disposition": "Use as is", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1194", "opened_on": "2026-09-17", "station": "S3", "part": "Frame", "defect": "Torque out of spec", "disposition": "Use as is", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1197", "opened_on": "2026-09-17", "station": "S5", "part": "Systems bracket", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Closed", "days_open": 22}, {"ncr": "NCR-26-1186", "opened_on": "2026-09-15", "station": "S1", "part": "Frame", "defect": "Non-conforming rivet", "disposition": "Repair", "status": "Closed", "days_open": 24}, {"ncr": "NCR-26-1199", "opened_on": "2026-09-14", "station": "S4", "part": "Stringer", "defect": "Insufficient edge distance", "disposition": "Repair", "status": "Closed", "days_open": 25}], "depts": [{"id": "ASM", "name": "Final assembly", "metric": "Takt adherence", "value": 0.88, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 214, "note": "Fuselage pulse line, 5 stations. S4 stopped for missing parts.", "kind": "hangar", "x": 0, "z": -1, "w": 11, "d": 6.5, "h": 4.2}, {"id": "MCH", "name": "Machining", "metric": "OEE", "value": 0.78, "target": 0.75, "unit": "pct", "higher_is_better": true, "headcount": 96, "note": "5-axis cells running two shifts.", "kind": "box", "x": -14, "z": -7, "w": 6, "d": 5, "h": 2.2}, {"id": "CMP", "name": "Composites", "metric": "First pass yield", "value": 0.81, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 88, "note": "Porosity scrap on autoclave cycle 3.", "kind": "autoclave", "x": -3, "z": -11, "w": 7, "d": 3.6, "h": 2.6}, {"id": "SRF", "name": "Surface treatment", "metric": "On-time output", "value": 0.96, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 34, "note": "Anodizing line on plan.", "kind": "box", "x": 9, "z": -10.5, "w": 5, "d": 4, "h": 2.0}, {"id": "PNT", "name": "Paint", "metric": "On-time output", "value": 0.97, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 41, "note": "Booth 2 back from maintenance.", "kind": "box", "x": 15, "z": -2, "w": 5, "d": 6, "h": 2.8}, {"id": "LOG", "name": "Logistics", "metric": "Kit completeness", "value": 0.95, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 57, "note": "Kits complete except hydraulic brackets.", "kind": "box", "x": -14, "z": 8, "w": 7, "d": 5, "h": 2.4}, {"id": "QUA", "name": "Quality", "metric": "NCR disposition time", "value": 6.2, "target": 3.0, "unit": "days", "higher_is_better": false, "headcount": 39, "note": "Disposition backlog on frames and panels.", "kind": "office", "x": 3, "z": 9.5, "w": 5, "d": 3.5, "h": 2.2}, {"id": "ENG", "name": "Engineering", "metric": "Changes released on time", "value": 0.92, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 63, "note": "3 changes in work on systems routing.", "kind": "office", "x": 12, "z": 9, "w": 5, "d": 4, "h": 3.4}], "frictions": [{"id": "F1", "from": "LOG", "to": "ASM", "issue": "Parts shortage", "hours_lost": 186, "detail": "Hydraulic bracket kits not delivered to station S4."}, {"id": "F2", "from": "QUA", "to": "ASM", "issue": "NCRs awaiting disposition", "hours_lost": 142, "detail": "Frames at S2 waiting for a disposition decision."}, {"id": "F3", "from": "CMP", "to": "QUA", "issue": "Panels held for porosity review", "hours_lost": 64, "detail": "Composite panels queued for ultrasonic inspection."}, {"id": "F4", "from": "ENG", "to": "ASM", "issue": "Late engineering changes", "hours_lost": 54, "detail": "Systems routing change released after S4 had started."}]};
+
+(function () {
+  const C = { accent: '#5ec8f2', accent2: '#b9a6ff', grid: '#1b2731', axis: '#33434f', muted: '#8c9ba8', fg: '#e7eef3', ok: '#4dd4a3', warn: '#f3c64d', bad: '#ff6363', dim: '#3a4a56' };
+  const STATUS_CLASS = { 'On track': 's-ok', 'Delayed': 's-warn', 'Stopped': 's-bad', 'Open': 's-warn', 'Closed': 's-ok', 'On target': 's-ok', 'Below target': 's-bad' };
+  const STATUS_COLOR = { 'On track': C.ok, 'Delayed': C.warn, 'Stopped': C.bad, 'On target': C.ok, 'Below target': C.bad };
+  const pct1 = d3.format('.1%'), pct0 = d3.format('.0%'), int = d3.format(',');
+  const signed = (v, digits) => (v > 0 ? '+' : v < 0 ? '−' : '±') + d3.format(digits ? '.' + digits + 'f' : ',')(Math.abs(v));
+  const day = (s) => d3.utcFormat('%b %-d')(new Date(s));
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (s) => document.querySelector(s);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const button = (cls, text) => { const b = el('button', cls, text); b.type = 'button'; return b; };
+  const smooth = reduceMotion ? 'auto' : 'smooth';
+
+  const { kpis, stations, causes, ncrs, depts, frictions } = DATA;
+  depts.forEach((d) => { d.status = (d.higher_is_better ? d.value >= d.target : d.value <= d.target) ? 'On target' : 'Below target'; });
+  const fmtDept = (d, v) => d.unit === 'pct' ? pct0(v) : d3.format('.1f')(v) + ' days';
+  const last = kpis[kpis.length - 1], prev = kpis[kpis.length - 2];
+  const stationById = Object.fromEntries(stations.map((s) => [s.station, s]));
+  const deptById = Object.fromEntries(depts.map((d) => [d.id, d]));
+  const frById = Object.fromEntries(frictions.map((f) => [f.id, f]));
+  const LINE_DEPT = 'ASM';
+
+  /* state: view is 'site' or 'line'; sel is {type: 'dept'|'friction'|'station', id} or null */
+  const state = { view: 'site', sel: null };
+  let scene3d = null;
+
+  /* ---------- Header ---------- */
+  (function summary() {
+    const p = $('#summary');
+    const b = (t) => el('b', null, t);
+    const below = depts.filter((d) => d.status === 'Below target');
+    const top = frictions.slice().sort((a, z) => z.hours_lost - a.hours_lost)[0];
+    p.append(b(below.length + ' of ' + depts.length + ' departments'), ' are below target this week. The biggest friction runs from ',
+      b(deptById[top.from].name + ' to ' + deptById[top.to].name), ': ', b(int(top.hours_lost) + ' h'), ' of line time lost to ' + top.issue.toLowerCase() + '. Click a building to inspect it, or enter final assembly to see the pulse line.');
+  })();
+
+  /* ---------- Selection and views ---------- */
+  function isSel(type, id) { return state.sel && state.sel.type === type && state.sel.id === id; }
+  function refreshUI() {
+    document.querySelectorAll('.dept').forEach((b) => b.classList.toggle('is-active', isSel('dept', b.dataset.id)));
+    document.querySelectorAll('.fr').forEach((b) => b.classList.toggle('is-active', isSel('friction', b.dataset.id)));
+    document.querySelectorAll('.st').forEach((b) => b.classList.toggle('is-active', isSel('station', b.dataset.id)));
+    document.querySelectorAll('.tag').forEach((t) => t.classList.toggle('is-active', isSel(t.dataset.type, t.dataset.id)));
+    renderStageChrome();
+    renderInspector();
+    renderNcr();
+  }
+  function select(type, id, opts) {
+    const wantView = type === 'station' ? 'line' : type ? 'site' : state.view;
+    state.sel = type && !(opts && opts.toggle && isSel(type, id)) ? { type, id } : null;
+    if (wantView !== state.view) setView(wantView, true);
+    refreshUI();
+    if (scene3d) scene3d.focus();
+    if (opts && opts.reveal) {
+      const r = $('#stage').getBoundingClientRect();
+      if (r.bottom < 80 || r.top > window.innerHeight - 120) $('#stage').scrollIntoView({ behavior: smooth, block: 'center' });
+    }
+  }
+  function setView(view, keepSel) {
+    if (view === state.view) return;
+    state.view = view;
+    if (!keepSel) state.sel = null;
+    if (scene3d) scene3d.setView(view); else refreshUI();
+    if (!keepSel) refreshUI();
+  }
+
+  function renderStageChrome() {
+    const crumbs = $('#crumbs');
+    crumbs.textContent = '';
+    if (state.view === 'line') {
+      const back = button(null, '← Site map');
+      back.addEventListener('click', () => { setView('site'); select('dept', LINE_DEPT); });
+      crumbs.append(back, el('span', null, 'Final assembly · Pulse line'));
+    } else {
+      crumbs.append(el('span', null, 'Site map'));
+    }
+    const lg = $('#legend3d');
+    lg.textContent = '';
+    const item = (color, text, isBar) => { const s = el('span'); const i = el('i', isBar ? 'bar' : null); i.style.background = color; s.append(i, text); lg.append(s); };
+    if (state.view === 'site') { item(C.ok, 'On target'); item(C.bad, 'Below target'); item(C.warn, 'Friction', true); }
+    else { item(C.ok, 'On track'); item(C.warn, 'Delayed'); item(C.bad, 'Stopped'); }
+    const touch = window.matchMedia('(hover: none)').matches;
+    $('#stage-hint').textContent = (touch ? 'Swipe sideways to rotate · Tap ' : 'Drag to rotate · Scroll to zoom · Click ') + (state.view === 'site' ? 'a building or an arc' : 'a section');
+  }
+
+  /* ---------- Inspector ---------- */
+  function header(box, code, name) {
+    const top = el('div', 'insp-top');
+    const t = el('div');
+    t.append(el('div', 'insp-code', code), el('div', 'insp-name', name));
+    const close = button('insp-close', '×');
+    close.setAttribute('aria-label', 'Close details');
+    close.addEventListener('click', () => select(null));
+    top.append(t, close);
+    box.append(top);
+  }
+  function kvList(pairs) {
+    const kv = el('dl', 'kv');
+    pairs.forEach(([k, v]) => { const dd = el('dd'); dd.append(v); kv.append(el('dt', null, k), dd); });
+    return kv;
+  }
+  function frictionRows(list, box) {
+    const wrap = el('div', 'insp-list');
+    list.forEach((f) => {
+      const r = button('insp-row');
+      r.append(el('span', 'mono', f.from + ' → ' + f.to), el('span', null, f.issue), el('span', 'mono', int(f.hours_lost) + ' h'));
+      r.addEventListener('click', () => select('friction', f.id));
+      wrap.append(r);
+    });
+    box.append(wrap);
+  }
+  function renderInspector() {
+    const box = $('#inspector');
+    box.textContent = '';
+    const sel = state.sel;
+    if (state.view === 'site' && !sel) {
+      const below = depts.filter((d) => d.status === 'Below target');
+      box.append(el('div', 'insp-code', 'Site overview'), el('div', 'insp-name', below.length + ' of ' + depts.length + ' departments below target'));
+      box.append(kvList([['Below target', below.map((d) => d.name).join(', ')], ['Friction points', String(frictions.length)], ['Hours lost', int(d3.sum(frictions, (f) => f.hours_lost)) + ' h in 8 weeks']]));
+      box.append(el('div', 'insp-code', 'Largest friction'));
+      frictionRows(frictions.slice().sort((a, z) => z.hours_lost - a.hours_lost).slice(0, 3), box);
+      const go = button('btn', 'Enter final assembly →');
+      go.addEventListener('click', () => setView('line'));
+      box.append(go);
+      return;
+    }
+    if (state.view === 'line' && !sel) {
+      const counts = d3.rollup(stations, (v) => v.length, (s) => s.status);
+      box.append(el('div', 'insp-code', 'Final assembly · Pulse line'), el('div', 'insp-name', stations.length + ' stations, ' + (counts.get('Stopped') || 0) + ' stopped'));
+      box.append(kvList([['On track', String(counts.get('On track') || 0)], ['Delayed', String(counts.get('Delayed') || 0)], ['Stopped', String(counts.get('Stopped') || 0)], ['Takt adherence', pct0(last.takt_adherence) + ' in ' + last.week]]));
+      box.append(el('p', 'sub', 'Each fuselage section sits at one station. Click a section, or a station below, to inspect it.'));
+      return;
+    }
+    if (sel.type === 'dept') {
+      const d = deptById[sel.id];
+      header(box, d.id + ' · ' + d.metric, d.name);
+      box.append(el('span', 'pill ' + STATUS_CLASS[d.status], d.status));
+      const big = el('div', 'insp-big');
+      big.append(el('strong', null, fmtDept(d, d.value)), el('span', null, 'target ' + (d.higher_is_better ? '≥ ' : '≤ ') + fmtDept(d, d.target)));
+      box.append(big);
+      box.append(kvList([['Headcount', String(d.headcount)], ['Note', d.note]]));
+      const related = frictions.filter((f) => f.from === d.id || f.to === d.id);
+      if (related.length) { box.append(el('div', 'insp-code', 'Friction involving ' + d.id)); frictionRows(related, box); }
+      if (d.id === LINE_DEPT) {
+        const go = button('btn primary', 'Open the pulse line →');
+        go.addEventListener('click', () => setView('line'));
+        box.append(go);
+      }
+      return;
+    }
+    if (sel.type === 'friction') {
+      const f = frById[sel.id];
+      header(box, 'Friction · ' + f.from + ' → ' + f.to, f.issue);
+      const big = el('div', 'insp-big');
+      big.append(el('strong', null, int(f.hours_lost) + ' h'), el('span', null, 'of line time lost in 8 weeks'));
+      box.append(big);
+      box.append(kvList([['Source', deptById[f.from].name], ['Waiting', deptById[f.to].name], ['Detail', f.detail]]));
+      const wrap = el('div', 'insp-list');
+      [f.from, f.to].forEach((id) => {
+        const d = deptById[id];
+        const r = button('insp-row');
+        r.append(el('span', 'mono', d.id), el('span', null, d.name), el('span', 'mono ' + (d.status === 'On target' ? 'under' : 'over'), fmtDept(d, d.value)));
+        r.addEventListener('click', () => select('dept', id));
+        wrap.append(r);
+      });
+      box.append(wrap);
+      return;
+    }
+    const s = stationById[sel.id];
+    header(box, s.station + ' · ' + s.section, s.name);
+    box.append(el('span', 'pill ' + STATUS_CLASS[s.status], s.status));
+    const big = el('div', 'insp-big');
+    big.append(el('strong', null, pct0(s.progress)), el('span', null, 'of planned work done'));
+    box.append(big);
+    const bar = el('div', 'bar'); const fill = el('i'); fill.style.width = s.progress * 100 + '%'; fill.style.background = STATUS_COLOR[s.status]; bar.append(fill); box.append(bar);
+    const over = s.actual_hours / s.standard_hours - 1;
+    const hours = el('span');
+    hours.append(int(s.actual_hours) + ' h of ' + int(s.standard_hours) + ' h ', el('span', over > 0 ? 'over' : 'under', '(' + (over > 0 ? '+' : '−') + pct0(Math.abs(over)) + ')'));
+    box.append(kvList([['Hours', hours], ['Note', s.note]]));
+    const open = ncrs.filter((n) => n.station === s.station && n.status === 'Open');
+    const list = el('div', 'insp-list');
+    list.append(el('div', 'insp-code', open.length + ' open NCR' + (open.length === 1 ? '' : 's')));
+    open.slice(0, 3).forEach((n) => {
+      const row = el('div', 'insp-row');
+      row.append(el('span', 'mono', n.ncr), el('span', null, n.part + ': ' + n.defect), el('span', 'mono', n.days_open + ' d'));
+      list.append(row);
+    });
+    box.append(list);
+    const go = button('btn', 'Show in NCR log ↓');
+    go.addEventListener('click', () => $('#ncr-log').scrollIntoView({ behavior: smooth, block: 'start' }));
+    box.append(go);
+  }
+
+  /* ---------- Site: departments and frictions ---------- */
+  depts.forEach((d) => {
+    const b = button('dept');
+    b.dataset.id = d.id; b.dataset.status = d.status;
+    const top = el('div', 'd-top');
+    top.append(el('span', 'd-code', d.id), el('span', 'pill ' + STATUS_CLASS[d.status], d.status));
+    const val = el('div', 'd-val');
+    val.append(el('strong', null, fmtDept(d, d.value)), el('span', null, 'target ' + fmtDept(d, d.target)));
+    b.append(top, el('div', 'd-name', d.name), el('div', 'd-metric', d.metric), val);
+    b.addEventListener('click', () => select('dept', d.id, { toggle: true, reveal: true }));
+    $('#depts').append(b);
+  });
+  (function drawFrictions() {
+    const list = frictions.slice().sort((a, z) => z.hours_lost - a.hours_lost);
+    const max = list[0].hours_lost;
+    list.forEach((f) => {
+      const b = button('fr');
+      b.dataset.id = f.id;
+      const issue = el('div', 'fr-issue', f.issue);
+      issue.append(el('small', null, f.detail));
+      const track = el('span', 'track'); const bar = el('b'); bar.style.width = f.hours_lost / max * 100 + '%'; bar.style.background = C.warn; track.append(bar);
+      b.append(el('span', 'fr-route', deptById[f.from].name + ' → ' + deptById[f.to].name), issue, track, el('span', 'fr-v', int(f.hours_lost) + ' h'));
+      b.addEventListener('click', () => select('friction', f.id, { toggle: true, reveal: true }));
+      $('#frictions').append(b);
+    });
+  })();
+
+  /* ---------- Line: KPI tiles ---------- */
+  const METRICS = [
+    { k: 'fpy', label: 'First pass yield', def: 'Operations passing quality inspection first time', fmt: pct1, up: true, pts: true },
+    { k: 'takt_adherence', label: 'Takt adherence', def: 'Station moves completed on time', fmt: pct0, up: true, pts: true },
+    { k: 'open_ncrs', label: 'Open NCRs', def: 'Non-conformances awaiting closure, whole line', fmt: int, up: false },
+    { k: 'traveled_work_hours', label: 'Traveled work', def: 'Hours carried past their planned station', fmt: (v) => int(v) + ' h', up: false },
+    { k: 'on_time_delivery', label: 'On-time delivery', def: 'Sections delivered by the planned date', fmt: pct0, up: true, pts: true }
+  ];
+  $('#kpi-sub').textContent = 'Week ' + last.week + ', with the change from ' + prev.week;
+  const sparks = [];
+  METRICS.forEach((m) => {
+    const c = el('div', 'card tile');
+    c.append(el('div', 'tile-label', m.label), el('div', 'tile-def', m.def), el('div', 'tile-big', m.fmt(last[m.k])));
+    const raw = last[m.k] - prev[m.k];
+    const d = m.pts ? Math.round(raw * 1000) / 10 : raw;
+    const delta = el('div', 'tile-delta');
+    delta.append(el('span', d === 0 ? '' : (d > 0) === m.up ? 'good' : 'bad', m.pts ? signed(d, 1) + ' pts' : signed(d)), ' vs ' + prev.week);
+    const sp = el('div', 'spark');
+    c.append(delta, sp);
+    $('#tiles').append(c);
+    sparks.push([sp, kpis.map((r) => r[m.k])]);
+  });
+  function drawSparks() {
+    sparks.forEach(([node, vals]) => {
+      const w = node.clientWidth || 160, h = 36;
+      const x = d3.scaleLinear([0, vals.length - 1], [3, w - 4]);
+      const y = d3.scaleLinear(d3.extent(vals), [h - 4, 4]);
+      const svg = d3.create('svg').attr('width', '100%').attr('height', h).attr('viewBox', '0 0 ' + w + ' ' + h);
+      svg.append('path').attr('d', d3.line((v, i) => x(i), (v) => y(v))(vals)).attr('fill', 'none').attr('stroke', C.accent).attr('stroke-width', 2).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+      svg.append('circle').attr('cx', x(vals.length - 1)).attr('cy', y(vals[vals.length - 1])).attr('r', 3).attr('fill', C.accent);
+      node.replaceChildren(svg.node());
+    });
+  }
+
+  /* ---------- Line: station cards ---------- */
+  stations.forEach((s) => {
+    const b = button('st');
+    b.dataset.id = s.station; b.dataset.status = s.status;
+    const top = el('div', 'st-top');
+    top.append(el('span', 'st-code', s.station), el('span', 'pill ' + STATUS_CLASS[s.status], s.status));
+    const bar = el('div', 'bar'); const f = el('i'); f.style.width = s.progress * 100 + '%'; f.style.background = STATUS_COLOR[s.status]; bar.append(f);
+    b.append(top, el('div', 'st-name', s.name), el('div', 'st-sec', s.section), el('div', 'st-pct', pct0(s.progress)), bar,
+      el('div', 'st-meta', int(s.actual_hours) + ' h of ' + int(s.standard_hours) + ' h standard'), el('div', 'st-meta', s.note));
+    b.addEventListener('click', () => select('station', s.station, { toggle: true, reveal: true }));
+    $('#stations').append(b);
+  });
+
+  /* ---------- Line: trend chart ---------- */
+  function drawTrend() {
+    const box = $('#trend');
+    box.textContent = '';
+    const W = box.clientWidth || 480, H = 240;
+    const series = [{ k: 'fpy', name: 'FPY', color: C.accent }, { k: 'takt_adherence', name: 'Takt', color: C.accent2 }];
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('height', H).attr('viewBox', '0 0 ' + W + ' ' + H);
+    const probe = svg.append('text').attr('class', 'endlab');
+    const endW = d3.max(series, (s) => { probe.text(s.name + ' ' + pct1(last[s.k])); return probe.node().getComputedTextLength(); });
+    probe.attr('class', 'tick').text('100%');
+    const tickW = probe.node().getComputedTextLength();
+    probe.remove();
+    const m = { t: 12, r: endW + 14, b: 26, l: tickW + 10 };
+    const x = d3.scalePoint(kpis.map((r) => r.week), [m.l, W - m.r]);
+    const y = d3.scaleLinear([0.6, 1], [H - m.b, m.t]);
+    y.ticks(4).forEach((t) => {
+      svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(t)).attr('y2', y(t)).attr('stroke', C.grid);
+      svg.append('text').attr('class', 'tick').attr('x', m.l - 8).attr('y', y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').text(pct0(t));
+    });
+    const every = x.step() < 40 ? 2 : 1;
+    kpis.forEach((r, i) => {
+      if ((kpis.length - 1 - i) % every) return;
+      svg.append('text').attr('class', 'tick').attr('x', x(r.week)).attr('y', H - 6).attr('text-anchor', 'middle').text(r.week);
+    });
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(0.9)).attr('y2', y(0.9)).attr('stroke', C.muted).attr('stroke-dasharray', '4 4');
+    series.forEach((s) => {
+      svg.append('path').attr('d', d3.line((r) => x(r.week), (r) => y(r[s.k]))(kpis)).attr('fill', 'none').attr('stroke', s.color).attr('stroke-width', 2).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round');
+    });
+    const ends = series.map((s) => ({ s, y: y(last[s.k]) })).sort((a, b) => a.y - b.y);
+    if (ends[1].y - ends[0].y < 14) { const mid = (ends[0].y + ends[1].y) / 2; ends[0].y = mid - 7; ends[1].y = mid + 7; }
+    ends.forEach(({ s, y: ly }) => {
+      svg.append('circle').attr('cx', x(last.week)).attr('cy', y(last[s.k])).attr('r', 3).attr('fill', s.color);
+      svg.append('text').attr('class', 'endlab').attr('x', x(last.week) + 8).attr('y', ly).attr('dy', '0.32em').attr('fill', s.color).text(s.name + ' ' + pct1(last[s.k]));
+    });
+    const rule = svg.append('line').attr('y1', m.t).attr('y2', H - m.b).attr('stroke', C.axis).style('display', 'none');
+    const dots = series.map((s) => svg.append('circle').attr('r', 4).attr('fill', s.color).style('display', 'none'));
+    const tip = d3.select(box).append('div').attr('class', 'tip').style('display', 'none');
+    svg.append('rect').attr('x', m.l).attr('y', m.t).attr('width', W - m.l - m.r).attr('height', H - m.t - m.b).attr('fill', 'transparent')
+      .on('pointermove', (ev) => {
+        const [px] = d3.pointer(ev);
+        const r = kpis[d3.minIndex(kpis, (k) => Math.abs(x(k.week) - px))], cx = x(r.week);
+        rule.attr('x1', cx).attr('x2', cx).style('display', null);
+        dots.forEach((d, j) => d.attr('cx', cx).attr('cy', y(r[series[j].k])).style('display', null));
+        tip.style('display', null).html('');
+        tip.append('div').attr('class', 'tip-h').text(r.week + ' · from ' + day(r.week_start));
+        series.forEach((s) => { const row = tip.append('div').attr('class', 'tip-r'); row.append('i').style('background', s.color); row.append('span').text(s.name + ' ' + pct1(r[s.k])); });
+        const sx = box.clientWidth / W, tw = tip.node().offsetWidth;
+        let left = cx * sx + 12;
+        if (left + tw > box.clientWidth) left = cx * sx - tw - 12;
+        tip.style('left', Math.max(0, left) + 'px').style('top', m.t * sx + 'px');
+      })
+      .on('pointerleave', () => { rule.style('display', 'none'); dots.forEach((d) => d.style('display', 'none')); tip.style('display', 'none'); });
+  }
+
+  /* ---------- Line: bar rows ---------- */
+  function barRow(label, title, pct, color, value) {
+    const row = el('div', 'row');
+    const l = el('span', 'row-l', label); l.title = title;
+    const track = el('span', 'track'); const b = el('b'); b.style.width = pct * 100 + '%'; b.style.background = color; track.append(b);
+    row.append(l, track, el('span', 'row-v', value));
+    return { row, track };
+  }
+  (function drawCauses() {
+    const data = causes.slice().sort((a, b) => b.hours_lost - a.hours_lost);
+    const max = data[0].hours_lost;
+    data.forEach((d, i) => $('#causes').append(barRow(d.cause, d.cause, d.hours_lost / max, i === 0 ? C.accent : C.dim, int(d.hours_lost) + ' h').row));
+  })();
+  (function drawHours() {
+    const max = d3.max(stations, (d) => Math.max(d.actual_hours, d.standard_hours)) * 1.05;
+    stations.forEach((d) => {
+      const { row, track } = barRow(d.station + '  ' + d.name, d.station + ' · ' + d.name, d.actual_hours / max, d.actual_hours > d.standard_hours ? C.bad : C.accent, int(d.actual_hours) + ' / ' + int(d.standard_hours) + ' h');
+      const u = el('u'); u.style.left = 'calc(' + (d.standard_hours / max * 100) + '% - 1px)'; track.append(u);
+      $('#hours').append(row);
+    });
+  })();
+
+  /* ---------- Line: NCR log ---------- */
+  const sort = { k: 'opened_on', dir: -1 };
+  const NUM = { days_open: true };
+  const COLS = ['ncr', 'opened_on', 'station', 'part', 'defect', 'disposition', 'status', 'days_open'];
+  function renderNcr() {
+    const q = $('#ncr-search').value.trim().toLowerCase();
+    const onlyOpen = $('#ncr-open').checked;
+    const station = state.sel && state.sel.type === 'station' ? state.sel.id : null;
+    const chip = $('#ncr-chip');
+    chip.hidden = !station;
+    if (station) chip.textContent = 'Station ' + station + '  ×';
+    const rows = ncrs
+      .filter((r) => !station || r.station === station)
+      .filter((r) => !onlyOpen || r.status === 'Open')
+      .filter((r) => !q || COLS.some((c) => String(r[c]).toLowerCase().includes(q)))
+      .sort((a, b) => {
+        const va = NUM[sort.k] ? a[sort.k] : String(a[sort.k]), vb = NUM[sort.k] ? b[sort.k] : String(b[sort.k]);
+        return (va < vb ? -1 : va > vb ? 1 : 0) * sort.dir;
+      });
+    const body = $('#ncr-body');
+    body.textContent = '';
+    if (!rows.length) { const tr = el('tr'); const td = el('td', 'empty', 'No NCRs match these filters.'); td.colSpan = COLS.length; tr.append(td); body.append(tr); }
+    rows.forEach((r) => {
+      const tr = el('tr');
+      COLS.forEach((c) => {
+        let td;
+        if (c === 'ncr') td = el('td', 'mono', r[c]);
+        else if (c === 'opened_on') td = el('td', null, day(r[c]));
+        else if (c === 'status') { td = el('td'); td.append(el('span', 'pill ' + STATUS_CLASS[r[c]], r[c])); }
+        else if (c === 'days_open') td = el('td', 'r' + (r.status === 'Open' && r[c] > 14 ? ' late' : ''), int(r[c]));
+        else td = el('td', null, r[c]);
+        tr.append(td);
+      });
+      body.append(tr);
+    });
+    document.querySelectorAll('th').forEach((th) => th.setAttribute('aria-sort', th.dataset.k === sort.k ? (sort.dir > 0 ? 'ascending' : 'descending') : 'none'));
+  }
+  document.querySelectorAll('th button').forEach((btn) => btn.addEventListener('click', () => {
+    const k = btn.parentElement.dataset.k;
+    sort.dir = sort.k === k ? -sort.dir : (NUM[k] ? -1 : 1);
+    sort.k = k;
+    renderNcr();
+  }));
+  $('#ncr-search').addEventListener('input', renderNcr);
+  $('#ncr-open').addEventListener('change', renderNcr);
+  $('#ncr-chip').addEventListener('click', () => select(null));
+
+  /* ---------- 3D ---------- */
+  function initScene() {
+    const host = $('#stage-canvas');
+    if (!window.THREE || !THREE.OrbitControls) return fail3d(host);
+    let renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { return fail3d(host); }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    host.prepend(renderer.domElement);
+    const touch = window.matchMedia('(hover: none)').matches;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 200);
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = 0.08; controls.enablePan = false; controls.enableZoom = !touch;
+    controls.autoRotateSpeed = 0.4;
+    renderer.domElement.style.touchAction = 'pan-y';
+    let goal = null;
+    controls.addEventListener('start', () => { controls.autoRotate = false; goal = null; });
+
+    scene.add(new THREE.HemisphereLight(0xcfe6ff, 0x0a0f13, 0.85));
+    const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(6, 12, 8); scene.add(key);
+    const rim = new THREE.DirectionalLight(0x5ec8f2, 0.8); rim.position.set(-8, 4, -9); scene.add(rim);
+
+    const ghostLine = new THREE.LineBasicMaterial({ color: 0x5ec8f2, transparent: true, opacity: 0.32 });
+    const ghostWire = new THREE.MeshBasicMaterial({ color: 0x5ec8f2, wireframe: true, transparent: true, opacity: 0.13 });
+    const pickables = { site: [], line: [] };
+    const tagsBox = $('#tags');
+    const tagList = [];
+    function addTag(view, type, id, html, anchor) {
+      const t = button('tag' + (type === 'friction' ? ' is-friction' : ''));
+      t.dataset.type = type; t.dataset.id = id;
+      html(t);
+      t.addEventListener('click', () => select(type, id, { toggle: true }));
+      tagsBox.append(t);
+      tagList.push({ el: t, view, anchor });
+    }
+
+    /* ----- Site map ----- */
+    const site = new THREE.Group(); scene.add(site);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(46, 32), new THREE.MeshStandardMaterial({ color: 0x0d151b, roughness: 1 }));
+    ground.rotation.x = -Math.PI / 2; site.add(ground);
+    const sgrid = new THREE.GridHelper(46, 46, 0x1f3a4a, 0x132028); sgrid.position.y = 0.01; sgrid.scale.z = 32 / 46; sgrid.material.transparent = true; sgrid.material.opacity = 0.65; site.add(sgrid);
+    const fencePts = [[-22, -15], [22, -15], [22, 15], [-22, 15]].map(([x, z]) => new THREE.Vector3(x, 0.03, z));
+    site.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(fencePts), ghostLine));
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(44, 1.4), new THREE.MeshStandardMaterial({ color: 0x131d24, roughness: 1 }));
+    road.rotation.x = -Math.PI / 2; road.position.set(0, 0.02, 3.6); site.add(road);
+
+    const buildings = [];
+    depts.forEach((d, i) => {
+      const col = new THREE.Color(STATUS_COLOR[d.status]);
+      const g = new THREE.Group(); g.position.set(d.x, 0, d.z); site.add(g);
+      const wallMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0x2a3843).lerp(col, 0.28), metalness: 0.35, roughness: 0.6, emissive: col, emissiveIntensity: 0.12 });
+      const edgeMat = new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.75 });
+      const parts = [];
+      const add = (geo, y) => { const m = new THREE.Mesh(geo, wallMat); m.position.y = y; m.userData.id = d.id; g.add(m); parts.push(m); pickables.site.push(m);
+        const e = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), edgeMat); e.position.y = y; g.add(e); };
+      if (d.kind === 'hangar') {
+        const wallH = d.h * 0.55;
+        add(new THREE.BoxGeometry(d.w, wallH, d.d), wallH / 2);
+        const arch = new THREE.Shape(); arch.moveTo(-d.d / 2, 0); arch.quadraticCurveTo(0, (d.h - wallH) * 2, d.d / 2, 0); arch.lineTo(-d.d / 2, 0);
+        const roof = new THREE.ExtrudeGeometry(arch, { depth: d.w, bevelEnabled: false, curveSegments: 24 });
+        roof.translate(0, 0, -d.w / 2); roof.rotateY(Math.PI / 2);
+        add(roof, wallH);
+        const door = new THREE.Mesh(new THREE.PlaneGeometry(d.d * 0.6, wallH * 0.8), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.35, side: THREE.DoubleSide }));
+        door.rotation.y = Math.PI / 2; door.position.set(d.w / 2 + 0.01, wallH * 0.4, 0); g.add(door);
+      } else {
+        add(new THREE.BoxGeometry(d.w, d.h, d.d), d.h / 2);
+        if (d.kind === 'office') {
+          for (let k = 1; k < 4; k++) { const strip = new THREE.Mesh(new THREE.BoxGeometry(d.w * 1.002, 0.08, d.d * 1.002), new THREE.MeshBasicMaterial({ color: 0x5ec8f2, transparent: true, opacity: 0.35 })); strip.position.y = (d.h * k) / 4; g.add(strip); }
+        }
+        if (d.kind === 'autoclave') {
+          const ac = new THREE.CylinderGeometry(0.9, 0.9, 3.2, 32); ac.rotateZ(Math.PI / 2);
+          const m = new THREE.Mesh(ac, wallMat); m.position.set(0, 0.9, d.d / 2 + 1.1); m.userData.id = d.id; g.add(m); parts.push(m); pickables.site.push(m);
+          const e = new THREE.LineSegments(new THREE.EdgesGeometry(ac, 30), edgeMat); e.position.copy(m.position); g.add(e);
+        }
+      }
+      const pad = new THREE.Mesh(new THREE.PlaneGeometry(d.w + 1, d.d + 1), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.1 }));
+      pad.rotation.x = -Math.PI / 2; pad.position.y = 0.025; g.add(pad);
+      const ow = (d.w + 1) / 2, od = (d.d + 1) / 2;
+      g.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[-ow, -od], [ow, -od], [ow, od], [-ow, od]].map(([x, z]) => new THREE.Vector3(x, 0.035, z))), edgeMat));
+      buildings.push({ id: d.id, g, wallMat, edgeMat, bad: d.status === 'Below target', glow: 0.12, delay: i * 0.08 });
+      addTag('site', 'dept', d.id, (t) => {
+        const dot = el('i'); dot.style.background = STATUS_COLOR[d.status];
+        t.append(dot, d.id + ' ', el('span', null, fmtDept(d, d.value)));
+        t.setAttribute('aria-label', d.name + ', ' + d.metric + ' ' + fmtDept(d, d.value) + ', ' + d.status);
+      }, () => new THREE.Vector3(d.x, d.h + 0.6, d.z));
+    });
+
+    const maxH = d3.max(frictions, (f) => f.hours_lost);
+    const arcs = frictions.map((f) => {
+      const a = deptById[f.from], b = deptById[f.to];
+      const A = new THREE.Vector3(a.x, a.h + 0.15, a.z), B = new THREE.Vector3(b.x, b.h + 0.15, b.z);
+      const mid = A.clone().add(B).multiplyScalar(0.5); mid.y = Math.max(a.h, b.h) + 2.2 + A.distanceTo(B) * 0.18;
+      const curve = new THREE.QuadraticBezierCurve3(A, mid, B);
+      const radius = 0.05 + (f.hours_lost / maxH) * 0.09;
+      const mat = new THREE.MeshBasicMaterial({ color: 0xf3c64d, transparent: true, opacity: 0.8 });
+      const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 64, radius, 8), mat); site.add(tube);
+      const hit = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.45, 6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+      hit.userData = { id: f.id, type: 'friction' }; site.add(hit); pickables.site.push(hit);
+      const beads = [0, 1, 2].map(() => { const s = new THREE.Mesh(new THREE.SphereGeometry(radius * 2.1, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffe08a })); site.add(s); return s; });
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(radius * 3, radius * 7, 12), mat);
+      cone.position.copy(curve.getPoint(0.97)); cone.lookAt(B); cone.rotateX(Math.PI / 2); site.add(cone);
+      addTag('site', 'friction', f.id, (t) => {
+        t.append('⚠ ' + int(f.hours_lost) + ' h');
+        t.setAttribute('aria-label', 'Friction from ' + a.name + ' to ' + b.name + ': ' + f.issue + ', ' + int(f.hours_lost) + ' hours lost');
+      }, () => curve.getPoint(0.5).add(new THREE.Vector3(0, 0.5, 0)));
+      return { id: f.id, curve, mat, beads, speed: 0.12 + (f.hours_lost / maxH) * 0.1, glow: 0.8 };
+    });
+
+    /* ----- Fuselage line ----- */
+    const line = new THREE.Group(); scene.add(line);
+    const lgrid = new THREE.GridHelper(36, 72, 0x1f3a4a, 0x132028); lgrid.position.y = -2.1; lgrid.material.transparent = true; lgrid.material.opacity = 0.7; line.add(lgrid);
+    const R = 1, L = 1.7, GAP = 0.16, N = stations.length;
+    const total = N * L + (N - 1) * GAP;
+    const xAt = (i) => -total / 2 + L / 2 + i * (L + GAP);
+    const thinMat = new THREE.MeshStandardMaterial({ color: 0x6f7e89, metalness: 0.5, roughness: 0.5 });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x08131b, emissive: 0x5ec8f2, emissiveIntensity: 0.18, metalness: 0.2, roughness: 0.2 });
+    const innerMat = new THREE.MeshStandardMaterial({ color: 0x0c141a, roughness: 1, side: THREE.BackSide });
+    const sections = [];
+    stations.forEach((s, i) => {
+      const g = new THREE.Group(); line.add(g);
+      const col = new THREE.Color(STATUS_COLOR[s.status]);
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xb9c5ce, metalness: 0.62, roughness: 0.36, emissive: col, emissiveIntensity: 0.06 });
+      const skin = new THREE.Mesh(new THREE.CylinderGeometry(R, R, L, 72, 1, true), skinMat);
+      skin.rotation.z = Math.PI / 2; skin.userData.id = s.station; g.add(skin); pickables.line.push(skin);
+      const inner = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.985, R * 0.985, L, 48, 1, true), innerMat); inner.rotation.z = Math.PI / 2; g.add(inner);
+      const frameMat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.55, metalness: 0.2, roughness: 0.5 });
+      for (let k = 0; k <= 6; k++) {
+        const edge = k === 0 || k === 6;
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(R * 1.004, edge ? 0.024 : 0.007, 8, 120), edge ? frameMat : thinMat);
+        ring.rotation.y = Math.PI / 2; ring.position.x = -L / 2 + (k * L) / 6; g.add(ring);
+      }
+      const pts = [];
+      for (let a = 0; a < 28; a++) { const t = (a / 28) * Math.PI * 2, y = Math.cos(t) * R * 1.003, z = Math.sin(t) * R * 1.003; pts.push(-L / 2, y, z, L / 2, y, z); }
+      const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      g.add(new THREE.LineSegments(sg, new THREE.LineBasicMaterial({ color: 0x2e3c47, transparent: true, opacity: 0.7 })));
+      const count = Math.floor((L - 0.2) / 0.22);
+      const wins = new THREE.InstancedMesh(new THREE.BoxGeometry(0.03, 0.13, 0.085), glassMat, count * 2);
+      const dummy = new THREE.Object3D(); let n = 0;
+      const wy = 0.3, wz = Math.sqrt(R * R - wy * wy) * 1.004;
+      for (let k = 0; k < count; k++) {
+        const wx = -L / 2 + 0.2 + k * 0.22;
+        [1, -1].forEach((side) => { dummy.position.set(wx, wy, wz * side); dummy.rotation.set(-Math.atan2(wy, wz * side), 0, 0); dummy.updateMatrix(); wins.setMatrixAt(n++, dummy.matrix); });
+      }
+      g.add(wins);
+      const trackRing = new THREE.Mesh(new THREE.TorusGeometry(R * 1.14, 0.012, 6, 120), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.18 }));
+      trackRing.rotation.y = Math.PI / 2; g.add(trackRing);
+      const arc = new THREE.Mesh(new THREE.TorusGeometry(R * 1.14, 0.032, 8, 160, Math.max(0.01, s.progress * Math.PI * 2)), new THREE.MeshBasicMaterial({ color: col }));
+      arc.rotation.y = Math.PI / 2; arc.rotateZ(Math.PI / 2); g.add(arc);
+      sections.push({ id: s.station, g, skinMat, frameMat, baseX: xAt(i), lift: 0, glow: 0.06 });
+      addTag('line', 'station', s.station, (t) => {
+        const dot = el('i'); dot.style.background = STATUS_COLOR[s.status];
+        t.append(dot, s.station + ' ', el('span', null, pct0(s.progress)));
+        t.setAttribute('aria-label', s.station + ' ' + s.name + ', ' + s.status + ', ' + pct0(s.progress) + ' complete');
+      }, () => { const sec = sections[i]; return new THREE.Vector3(sec.g.position.x, sec.g.position.y + R + 0.5, 0); });
+    });
+    const NL = 2.5, nosePts = [];
+    for (let k = 0; k <= 20; k++) { const t = k / 20; nosePts.push(new THREE.Vector2(R * Math.sqrt(Math.max(0, 1 - t * t)) * (1 - 0.06 * t), t * NL)); }
+    const nose = new THREE.Mesh(new THREE.LatheGeometry(nosePts, 40), ghostWire);
+    nose.rotation.z = Math.PI / 2; nose.position.x = xAt(0) - L / 2 - GAP; line.add(nose);
+    const TL = 3.2, tailPts = [];
+    for (let k = 0; k <= 20; k++) { const t = k / 20; tailPts.push(new THREE.Vector2(R - (R - 0.2) * Math.pow(t, 1.25), t * TL)); }
+    const tailGeo = new THREE.LatheGeometry(tailPts, 40);
+    const tp = tailGeo.attributes.position;
+    for (let v = 0; v < tp.count; v++) { const t = tp.getY(v) / TL; tp.setX(v, tp.getX(v) - 0.6 * t * t); }
+    const tail = new THREE.Mesh(tailGeo, ghostWire);
+    tail.rotation.z = -Math.PI / 2; const tailX = xAt(N - 1) + L / 2 + GAP; tail.position.x = tailX; line.add(tail);
+    const outline = (shape, setup) => { const m = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.ShapeGeometry(shape)), ghostLine); setup(m); line.add(m); };
+    const fin = new THREE.Shape(); fin.moveTo(0, 0); fin.lineTo(1.7, 0); fin.lineTo(2.5, 2.0); fin.lineTo(1.85, 2.0); fin.closePath();
+    outline(fin, (m) => m.position.set(tailX + 0.9, 0.62, 0));
+    [1, -1].forEach((side) => {
+      const stab = new THREE.Shape(); stab.moveTo(0, 0); stab.lineTo(1.3, 0); stab.lineTo(1.9, 1.7 * side); stab.lineTo(1.4, 1.7 * side); stab.closePath();
+      outline(stab, (m) => { m.rotation.x = Math.PI / 2; m.position.set(tailX + 1.6, 0.42, side * 0.22); });
+      const wing = new THREE.Shape(); wing.moveTo(0, 0); wing.lineTo(2.9, 0); wing.lineTo(3.9, 5.4 * side); wing.lineTo(3.0, 5.4 * side); wing.closePath();
+      outline(wing, (m) => { m.rotation.x = Math.PI / 2; m.position.set(xAt(2) - 1.6, -0.55, side * 0.85); });
+    });
+
+    /* ----- Views ----- */
+    const VIEWS = {
+      site: { home: new THREE.Vector3(17, 17, 24), target: new THREE.Vector3(0, 0, 1), min: 12, max: 55, polar: Math.PI * 0.42, fog: [45, 95], near: 16 },
+      line: { home: new THREE.Vector3(7.8, 3.4, 10.8), target: new THREE.Vector3(0, 0, 0), min: 4.5, max: 20, polar: Math.PI * 0.64, fog: [16, 34], near: 6.2 }
+    };
+    let viewStart = performance.now();
+    function applyView(view) {
+      const v = VIEWS[view];
+      site.visible = view === 'site'; line.visible = view === 'line';
+      const far = host.clientWidth < 700 ? 1.45 : 1;
+      camera.position.copy(v.target).add(v.home.clone().sub(v.target).multiplyScalar(far)); controls.target.copy(v.target);
+      controls.minDistance = v.min; controls.maxDistance = v.max; controls.maxPolarAngle = v.polar;
+      scene.fog = new THREE.Fog(0x0a0f13, v.fog[0], v.fog[1]);
+      controls.autoRotate = !reduceMotion;
+      goal = null;
+      tagList.forEach((t) => { t.el.hidden = t.view !== view; });
+      viewStart = performance.now();
+      controls.update();
+    }
+    applyView('site');
+
+    /* ----- Picking ----- */
+    const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+    let hover = null, downAt = null;
+    function pick(ev) {
+      const r = renderer.domElement.getBoundingClientRect();
+      ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ptr, camera);
+      const hits = ray.intersectObjects(pickables[state.view], false);
+      if (!hits.length) return null;
+      const solid = hits.find((h) => h.object.userData.type !== 'friction');
+      const h = hits[0].object.userData.type === 'friction' && solid && solid.distance - hits[0].distance < 0.6 ? solid : hits[0];
+      const u = h.object.userData;
+      return { type: u.type || (state.view === 'site' ? 'dept' : 'station'), id: u.id };
+    }
+    renderer.domElement.addEventListener('pointermove', (ev) => {
+      if (ev.pointerType !== 'mouse') return;
+      hover = pick(ev);
+      host.classList.toggle('is-hover', !!hover);
+    });
+    renderer.domElement.addEventListener('pointerleave', () => { hover = null; host.classList.remove('is-hover'); });
+    renderer.domElement.addEventListener('pointerdown', (ev) => { downAt = [ev.clientX, ev.clientY]; });
+    renderer.domElement.addEventListener('pointerup', (ev) => {
+      if (!downAt || Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) > 6) return;
+      const p = pick(ev);
+      if (p) select(p.type, p.id, { toggle: true });
+    });
+
+    function resize() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; camera.fov = w < 600 ? 46 : 36; camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(host);
+    resize();
+
+    const ease = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
+    const isHover = (type, id) => hover && hover.type === type && hover.id === id;
+    const v3 = new THREE.Vector3();
+    function frame(now) {
+      const t = (now - viewStart) / 1000;
+      const intro = reduceMotion ? 10 : t;
+      const sel = state.sel;
+      if (state.view === 'site') {
+        buildings.forEach((b) => {
+          const k = ease((intro - b.delay) / 0.9);
+          b.g.scale.set(1, Math.max(0.001, k), 1);
+          const active = sel && sel.type === 'dept' && sel.id === b.id;
+          const related = sel && sel.type === 'friction' && (frById[sel.id].from === b.id || frById[sel.id].to === b.id);
+          let to = b.bad && !reduceMotion ? 0.16 + 0.12 * Math.sin(now / 320) : 0.12;
+          if (active || related) to = 0.42; else if (isHover('dept', b.id)) to = 0.3; else if (sel) to *= 0.4;
+          b.glow += (to - b.glow) * 0.2;
+          b.wallMat.emissiveIntensity = b.glow;
+          b.edgeMat.opacity = sel && !active && !related ? 0.35 : 0.8;
+        });
+        arcs.forEach((a) => {
+          const active = sel && sel.type === 'friction' && sel.id === a.id;
+          const related = sel && sel.type === 'dept' && (frById[a.id].from === sel.id || frById[a.id].to === sel.id);
+          const to = active || isHover('friction', a.id) ? 1 : sel && !related ? 0.25 : 0.8;
+          a.glow += (to - a.glow) * 0.2;
+          a.mat.opacity = a.glow * Math.min(1, Math.max(0, (intro - 0.9) / 0.6));
+          a.beads.forEach((s, j) => {
+            const p = reduceMotion ? (j + 0.5) / 3 : ((now / 1000) * a.speed + j / 3) % 1;
+            s.position.copy(a.curve.getPoint(p));
+            s.visible = intro > 1.2 && a.glow > 0.4;
+          });
+        });
+      } else {
+        sections.forEach((s, i) => {
+          const k = ease((intro - i * 0.09) / 1.4);
+          const active = sel && sel.type === 'station' && sel.id === s.id;
+          s.lift += ((active ? 0.35 : 0) - s.lift) * 0.12;
+          const to = active ? 0.32 : isHover('station', s.id) ? 0.2 : sel ? 0.02 : 0.06;
+          s.glow += (to - s.glow) * 0.15;
+          s.skinMat.emissiveIntensity = s.glow;
+          s.frameMat.emissiveIntensity = sel && !active ? 0.25 : 0.6;
+          s.g.position.set(s.baseX * (1 + (1 - k) * 0.9), s.lift + (1 - k) * 1.2 * (i % 2 ? 1 : -1), 0);
+          s.g.rotation.x = (1 - k) * 0.6;
+        });
+      }
+      if (goal) {
+        controls.target.lerp(goal.target, 0.08);
+        camera.position.lerp(goal.pos, 0.08);
+        if (camera.position.distanceTo(goal.pos) < 0.01) goal = null;
+      }
+      controls.update();
+      renderer.render(scene, camera);
+      const w = host.clientWidth, h = host.clientHeight;
+      const tagsOn = intro > (state.view === 'site' ? 1.4 : 1.5);
+      tagList.forEach((tg) => {
+        if (tg.view !== state.view) return;
+        v3.copy(tg.anchor()).project(camera);
+        tg.el.style.opacity = v3.z > 1 || !tagsOn ? 0 : 1;
+        tg.el.style.transform = 'translate(' + ((v3.x + 1) / 2 * w) + 'px,' + ((1 - v3.y) / 2 * h) + 'px) translate(-50%, -100%)';
+      });
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    return {
+      setView(view) {
+        const fade = $('#fade');
+        if (reduceMotion) { applyView(view); refreshUI(); return; }
+        fade.classList.add('on');
+        setTimeout(() => { applyView(view); refreshUI(); this.focus(); requestAnimationFrame(() => fade.classList.remove('on')); }, 280);
+      },
+      focus() {
+        const v = VIEWS[state.view];
+        const sel = state.sel;
+        controls.autoRotate = false;
+        const dir = camera.position.clone().sub(controls.target).normalize();
+        if (dir.y < 0.15) { dir.y = 0.3; dir.normalize(); }
+        const small = window.innerWidth < 760;
+        let target = null, dist = v.near;
+        if (sel && sel.type === 'station' && state.view === 'line') { const s = sections.find((x) => x.id === sel.id); target = new THREE.Vector3(s.baseX, 0.2, 0); dist = small ? 7.5 : 6.2; }
+        if (sel && sel.type === 'dept' && state.view === 'site') { const d = deptById[sel.id]; target = new THREE.Vector3(d.x, d.h * 0.5, d.z); dist = small ? 22 : 17; }
+        if (sel && sel.type === 'friction' && state.view === 'site') { const a = arcs.find((x) => x.id === sel.id); target = a.curve.getPoint(0.5); target.y *= 0.5; dist = small ? 28 : 22; }
+        if (!target) { goal = { target: v.target.clone(), pos: v.target.clone().add(dir.multiplyScalar(v.home.distanceTo(v.target))) }; return; }
+        goal = { target, pos: target.clone().add(dir.multiplyScalar(dist)) };
+      }
+    };
+  }
+  function fail3d(host) {
+    host.classList.add('no-3d');
+    host.querySelector('.tags').remove();
+    host.querySelector('.stage-foot').remove();
+    host.append(el('p', null, 'The 3D view needs WebGL, which this browser does not provide. All the data is in the dashboard below.'));
+    return null;
+  }
+
+  /* ---------- Boot ---------- */
+  drawSparks();
+  drawTrend();
+  scene3d = initScene();
+  refreshUI();
+  let rt;
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { drawSparks(); drawTrend(); }, 150); });
+})();
+</script>
+</body>
+</html>
