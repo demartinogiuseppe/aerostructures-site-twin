@@ -1,15 +1,16 @@
 # Aerostructures Site Twin
 
-Concept dashboards for two sites, switchable at the top of the page:
+Concept dashboards for three sites, switchable at the top of the page:
 
-- **Aerospace:** an interactive 3D fuselage pulse line, linked to a 3D plant map with department health and friction points.
-- **Shipbuilding:** an interactive 3D grand-block line (hull blocks), linked to a 3D shipyard map with dry dock, departments and friction points.
+- **Aircraft:** an interactive 3D fuselage pulse line, linked to a 3D plant map with department health and friction points.
+- **Ship:** an interactive 3D grand-block line (hull blocks), linked to a 3D shipyard map with dry dock, departments and friction points.
+- **Rocket:** an interactive 3D booster section line stacked vertically next to a launch tower, linked to a 3D launch vehicle factory map.
 
-**Live demo:** https://demartinogiuseppe.github.io/aerostructures-site-twin/ (shipyard: [`?site=shipyard`](https://demartinogiuseppe.github.io/aerostructures-site-twin/?site=shipyard))
+**Live demo:** https://demartinogiuseppe.github.io/aerostructures-site-twin/ (shipyard: [`?site=shipyard`](https://demartinogiuseppe.github.io/aerostructures-site-twin/?site=shipyard), rocket: [`?site=rocket`](https://demartinogiuseppe.github.io/aerostructures-site-twin/?site=rocket))
 
 ## Disclaimer
 
-Both sites, their departments, stations and every number shown are fictional and generated for illustration. Any resemblance to a real company, program, product, aircraft or vessel is coincidental. Not affiliated with or endorsed by any manufacturer. Provided as is, for demonstration only.
+All three sites, their departments, stations and every number shown are fictional and generated for illustration. Any resemblance to a real company, program, product, aircraft, vessel or launch vehicle is coincidental. Not affiliated with or endorsed by any manufacturer. Provided as is, for demonstration only.
 
 ## Privacy
 
