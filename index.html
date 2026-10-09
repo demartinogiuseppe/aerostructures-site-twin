@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Aerostructures Site Twin</title>
-<meta name="description" content="Concept dashboard for an aerostructures plant: a 3D site map with department health and friction points, and a 3D fuselage pulse line linked to takt, quality and NCR data. Made-up demo data.">
-<meta property="og:title" content="Aerostructures Site Twin · interactive 3D dashboard">
-<meta property="og:description" content="A 3D plant map shows which departments are on target and where friction slows the line. Click into final assembly to inspect the fuselage pulse line. Concept demo with made-up data.">
+<title>Site Twin · Aerospace and Shipbuilding</title>
+<meta name="description" content="Concept dashboards for an aerostructures plant and a shipyard: a 3D production line (fuselage sections or hull blocks) linked to takt, quality and NCR data, and a 3D site map with department health and friction points. Made-up demo data.">
+<meta property="og:title" content="Site Twin · interactive 3D dashboards for aerospace and shipbuilding">
+<meta property="og:description" content="A 3D fuselage pulse line and a 3D grand-block line, each linked to its site map: which departments are on target and where friction slows the line. Concept demo with made-up data.">
 <meta property="og:type" content="website">
 <style>
 /* Fonts are self-hosted (SIL Open Font License): no request leaves this site. */
@@ -48,6 +48,11 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--f-
 h1 { margin: 0; font-family: var(--f-display); font-weight: 500; font-size: clamp(36px, 6vw, 64px); line-height: 1; letter-spacing: -.01em; text-wrap: balance; }
 .take { margin: 0; max-width: 70ch; color: var(--muted); font-size: 16px; }
 .take b { color: var(--fg); font-weight: 500; }
+.sector { display: inline-flex; width: max-content; max-width: 100%; padding: 3px; gap: 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+.sector a { padding: 6px 14px; border-radius: 999px; color: var(--muted); text-decoration: none; font: 500 13px/1.3 var(--f-body); white-space: nowrap; }
+.sector a:hover { color: var(--fg); }
+.sector a[aria-current="page"] { background: var(--accent); color: var(--bg); }
+.sector a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Stage */
 .stage { position: relative; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden;
@@ -220,8 +225,9 @@ td.late { color: var(--warn); }
 <body>
 <div class="wrap">
   <header class="head">
-    <div class="eyebrow"><span>Aerostructures plant · Digital twin</span><span class="chip">Concept demo</span></div>
-    <h1>Aerostructures Site Twin</h1>
+    <nav class="sector" aria-label="Choose a site"><a href="./" data-s="aero">Aerospace</a><a href="?site=shipyard" data-s="ship">Shipbuilding</a></nav>
+    <div class="eyebrow"><span data-t="eyebrow"></span><span class="chip">Concept demo</span></div>
+    <h1 data-t="title"></h1>
     <p class="take" id="summary"></p>
   </header>
 
@@ -236,7 +242,7 @@ td.late { color: var(--warn); }
   </section>
 
   <div class="part" id="line">
-    <div class="part-head"><span class="k">Final assembly</span><h2>Fuselage pulse line</h2></div>
+    <div class="part-head"><span class="k" data-t="line_dept"></span><h2 data-t="line_title"></h2></div>
     <section class="section">
       <div class="sec-head">
         <h3>This week's indicators</h3>
@@ -248,7 +254,7 @@ td.late { color: var(--warn); }
     <section class="section line-wrap">
       <div class="sec-head">
         <h3>Line status</h3>
-        <p class="sub">Sections move from S1 to S5 at every pulse. Takt time is 5 working days per station.</p>
+        <p class="sub" data-t="station_sub"></p>
       </div>
       <div class="stations" id="stations"></div>
     </section>
@@ -273,7 +279,7 @@ td.late { color: var(--warn); }
     <div class="card">
       <div class="sec-head">
         <h3>Actual vs standard hours</h3>
-        <p class="sub">Section currently in work at each station. Red bars have gone over standard.</p>
+        <p class="sub" data-t="hours_sub"></p>
       </div>
       <div class="rows" id="hours"></div>
       <div class="legend"><span><i style="width:13px;height:9px;background:var(--accent)"></i>Actual hours</span><span><i style="width:2px;height:14px;background:var(--fg)"></i>Standard hours</span></div>
@@ -326,7 +332,7 @@ td.late { color: var(--warn); }
   </div>
 
   <footer class="foot">
-    <p><b>Concept demo.</b> The plant, departments, stations, people counts and every number on this page are fictional and were generated for illustration. Any resemblance to a real company, program, product or aircraft is coincidental. Not affiliated with or endorsed by any manufacturer. Provided as is, for demonstration only; it is not engineering, quality or business advice.</p>
+    <p><b>Concept demo.</b> Both sites (the aerostructures plant and the shipyard), their departments, stations, people counts and every number on this page are fictional and were generated for illustration. Any resemblance to a real company, program, product, aircraft or vessel is coincidental. Not affiliated with or endorsed by any manufacturer. Provided as is, for demonstration only; it is not engineering, quality or business advice.</p>
     <p><b>Privacy.</b> This page sets no cookies, uses no analytics or tracking, and loads nothing from third-party servers: fonts and libraries are served from this site. It is hosted on GitHub Pages, which may log technical data such as IP addresses under the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub General Privacy Statement</a>.</p>
     <p>Built with <a href="https://threejs.org">three.js</a> (MIT) and <a href="https://d3js.org">d3</a> (ISC), with IBM Plex and Barlow fonts (SIL Open Font License). See <a href="https://github.com/demartinogiuseppe/aerostructures-site-twin/blob/main/THIRD_PARTY_NOTICES.md">third-party notices</a>.</p>
   </footer>
@@ -336,7 +342,13 @@ td.late { color: var(--warn); }
 <script src="vendor/three.min.js"></script>
 <script src="vendor/OrbitControls.js"></script>
 <script>
-const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_completed": 4, "fpy": 0.872, "takt_adherence": 0.71, "open_ncrs": 31, "traveled_work_hours": 412, "on_time_delivery": 0.8}, {"week": "W34", "week_start": "2026-08-17", "sections_completed": 5, "fpy": 0.881, "takt_adherence": 0.75, "open_ncrs": 29, "traveled_work_hours": 386, "on_time_delivery": 1.0}, {"week": "W35", "week_start": "2026-08-24", "sections_completed": 3, "fpy": 0.869, "takt_adherence": 0.73, "open_ncrs": 33, "traveled_work_hours": 431, "on_time_delivery": 0.75}, {"week": "W36", "week_start": "2026-08-31", "sections_completed": 5, "fpy": 0.894, "takt_adherence": 0.8, "open_ncrs": 27, "traveled_work_hours": 352, "on_time_delivery": 1.0}, {"week": "W37", "week_start": "2026-09-07", "sections_completed": 4, "fpy": 0.902, "takt_adherence": 0.78, "open_ncrs": 26, "traveled_work_hours": 340, "on_time_delivery": 1.0}, {"week": "W38", "week_start": "2026-09-14", "sections_completed": 5, "fpy": 0.897, "takt_adherence": 0.84, "open_ncrs": 24, "traveled_work_hours": 298, "on_time_delivery": 0.83}, {"week": "W39", "week_start": "2026-09-21", "sections_completed": 5, "fpy": 0.911, "takt_adherence": 0.86, "open_ncrs": 22, "traveled_work_hours": 271, "on_time_delivery": 1.0}, {"week": "W40", "week_start": "2026-09-28", "sections_completed": 6, "fpy": 0.918, "takt_adherence": 0.83, "open_ncrs": 23, "traveled_work_hours": 289, "on_time_delivery": 1.0}, {"week": "W41", "week_start": "2026-10-05", "sections_completed": 5, "fpy": 0.924, "takt_adherence": 0.88, "open_ncrs": 19, "traveled_work_hours": 236, "on_time_delivery": 1.0}], "stations": [{"station": "S1", "name": "Panel join", "section": "SEC-142", "progress": 0.92, "actual_hours": 318, "standard_hours": 300, "status": "On track", "note": "Longitudinal riveting almost complete"}, {"station": "S2", "name": "Frames and stringers", "section": "SEC-141", "progress": 0.64, "actual_hours": 402, "standard_hours": 360, "status": "Delayed", "note": "2 NCRs on frames awaiting disposition"}, {"station": "S3", "name": "Electrical installation", "section": "SEC-140", "progress": 0.81, "actual_hours": 275, "standard_hours": 290, "status": "On track", "note": "Harnesses routed, continuity test tomorrow"}, {"station": "S4", "name": "Systems and piping", "section": "SEC-139", "progress": 0.38, "actual_hours": 344, "standard_hours": 250, "status": "Stopped", "note": "Shortage: hydraulic bracket kit"}, {"station": "S5", "name": "Test and close-out", "section": "SEC-138", "progress": 0.97, "actual_hours": 188, "standard_hours": 200, "status": "On track", "note": "Final inspection and FOD check"}], "causes": [{"cause": "Parts shortage", "hours_lost": 186}, {"cause": "NCR awaiting disposition", "hours_lost": 142}, {"cause": "Waiting for quality inspection", "hours_lost": 97}, {"cause": "Tooling unavailable", "hours_lost": 71}, {"cause": "Engineering changes", "hours_lost": 54}, {"cause": "Certified staff absent", "hours_lost": 38}, {"cause": "Other", "hours_lost": 22}], "ncrs": [{"ncr": "NCR-26-1200", "opened_on": "2026-10-08", "station": "S2", "part": "Frame", "defect": "Insufficient edge distance", "disposition": "Rework", "status": "Closed", "days_open": 1}, {"ncr": "NCR-26-1183", "opened_on": "2026-10-04", "station": "S2", "part": "Stringer", "defect": "Excessive gap at joint", "disposition": "Pending", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1187", "opened_on": "2026-10-04", "station": "S1", "part": "Splice clip", "defect": "Missing sealant", "disposition": "Use as is", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1191", "opened_on": "2026-10-04", "station": "S3", "part": "Harness support", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1193", "opened_on": "2026-10-04", "station": "S5", "part": "Skin panel", "defect": "Non-conforming rivet", "disposition": "Pending", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1188", "opened_on": "2026-10-01", "station": "S2", "part": "Harness support", "defect": "Hole out of tolerance", "disposition": "Use as is", "status": "Open", "days_open": 8}, {"ncr": "NCR-26-1185", "opened_on": "2026-09-29", "station": "S2", "part": "Frame", "defect": "Missing sealant", "disposition": "Pending", "status": "Open", "days_open": 10}, {"ncr": "NCR-26-1189", "opened_on": "2026-09-29", "station": "S1", "part": "Harness support", "defect": "Hole out of tolerance", "disposition": "Repair", "status": "Closed", "days_open": 10}, {"ncr": "NCR-26-1196", "opened_on": "2026-09-27", "station": "S3", "part": "Doubler", "defect": "Non-conforming rivet", "disposition": "Scrap", "status": "Open", "days_open": 12}, {"ncr": "NCR-26-1180", "opened_on": "2026-09-26", "station": "S3", "part": "Splice clip", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1181", "opened_on": "2026-09-26", "station": "S4", "part": "Skin panel", "defect": "Insufficient edge distance", "disposition": "Pending", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1198", "opened_on": "2026-09-26", "station": "S2", "part": "Harness support", "defect": "Excessive gap at joint", "disposition": "Pending", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1192", "opened_on": "2026-09-21", "station": "S3", "part": "Door surround", "defect": "Scratch on surface treatment", "disposition": "Rework", "status": "Closed", "days_open": 18}, {"ncr": "NCR-26-1201", "opened_on": "2026-09-21", "station": "S2", "part": "Frame", "defect": "Insufficient edge distance", "disposition": "Repair", "status": "Closed", "days_open": 18}, {"ncr": "NCR-26-1195", "opened_on": "2026-09-19", "station": "S2", "part": "Systems bracket", "defect": "Torque out of spec", "disposition": "Pending", "status": "Open", "days_open": 20}, {"ncr": "NCR-26-1184", "opened_on": "2026-09-18", "station": "S1", "part": "Skin panel", "defect": "Torque out of spec", "disposition": "Use as is", "status": "Closed", "days_open": 21}, {"ncr": "NCR-26-1182", "opened_on": "2026-09-17", "station": "S1", "part": "Doubler", "defect": "Scratch on surface treatment", "disposition": "Pending", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1190", "opened_on": "2026-09-17", "station": "S2", "part": "Skin panel", "defect": "Non-conforming rivet", "disposition": "Use as is", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1194", "opened_on": "2026-09-17", "station": "S3", "part": "Frame", "defect": "Torque out of spec", "disposition": "Use as is", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1197", "opened_on": "2026-09-17", "station": "S5", "part": "Systems bracket", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Closed", "days_open": 22}, {"ncr": "NCR-26-1186", "opened_on": "2026-09-15", "station": "S1", "part": "Frame", "defect": "Non-conforming rivet", "disposition": "Repair", "status": "Closed", "days_open": 24}, {"ncr": "NCR-26-1199", "opened_on": "2026-09-14", "station": "S4", "part": "Stringer", "defect": "Insufficient edge distance", "disposition": "Repair", "status": "Closed", "days_open": 25}], "depts": [{"id": "ASM", "name": "Final assembly", "metric": "Takt adherence", "value": 0.88, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 214, "note": "Fuselage pulse line, 5 stations. S4 stopped for missing parts.", "kind": "hangar", "x": 0, "z": -1, "w": 11, "d": 6.5, "h": 4.2}, {"id": "MCH", "name": "Machining", "metric": "OEE", "value": 0.78, "target": 0.75, "unit": "pct", "higher_is_better": true, "headcount": 96, "note": "5-axis cells running two shifts.", "kind": "box", "x": -14, "z": -7, "w": 6, "d": 5, "h": 2.2}, {"id": "CMP", "name": "Composites", "metric": "First pass yield", "value": 0.81, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 88, "note": "Porosity scrap on autoclave cycle 3.", "kind": "autoclave", "x": -3, "z": -11, "w": 7, "d": 3.6, "h": 2.6}, {"id": "SRF", "name": "Surface treatment", "metric": "On-time output", "value": 0.96, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 34, "note": "Anodizing line on plan.", "kind": "box", "x": 9, "z": -10.5, "w": 5, "d": 4, "h": 2.0}, {"id": "PNT", "name": "Paint", "metric": "On-time output", "value": 0.97, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 41, "note": "Booth 2 back from maintenance.", "kind": "box", "x": 15, "z": -2, "w": 5, "d": 6, "h": 2.8}, {"id": "LOG", "name": "Logistics", "metric": "Kit completeness", "value": 0.95, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 57, "note": "Kits complete except hydraulic brackets.", "kind": "box", "x": -14, "z": 8, "w": 7, "d": 5, "h": 2.4}, {"id": "QUA", "name": "Quality", "metric": "NCR disposition time", "value": 6.2, "target": 3.0, "unit": "days", "higher_is_better": false, "headcount": 39, "note": "Disposition backlog on frames and panels.", "kind": "office", "x": 3, "z": 9.5, "w": 5, "d": 3.5, "h": 2.2}, {"id": "ENG", "name": "Engineering", "metric": "Changes released on time", "value": 0.92, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 63, "note": "3 changes in work on systems routing.", "kind": "office", "x": 12, "z": 9, "w": 5, "d": 4, "h": 3.4}], "frictions": [{"id": "F1", "from": "LOG", "to": "ASM", "issue": "Parts shortage", "hours_lost": 186, "detail": "Hydraulic bracket kits not delivered to station S4."}, {"id": "F2", "from": "QUA", "to": "ASM", "issue": "NCRs awaiting disposition", "hours_lost": 142, "detail": "Frames at S2 waiting for a disposition decision."}, {"id": "F3", "from": "CMP", "to": "QUA", "issue": "Panels held for porosity review", "hours_lost": 64, "detail": "Composite panels queued for ultrasonic inspection."}, {"id": "F4", "from": "ENG", "to": "ASM", "issue": "Late engineering changes", "hours_lost": 54, "detail": "Systems routing change released after S4 had started."}]};
+const ALL = {"aero": {"meta": {"title": "Aerostructures Site Twin", "eyebrow": "Aerostructures plant · Digital twin", "line_dept_id": "ASM", "line_dept": "Final assembly", "line_title": "Fuselage pulse line", "line_short": "Pulse line", "unit": "fuselage section", "unit_short": "section", "station_sub": "Sections move from S1 to S5 at every pulse. Takt time is 5 working days per station.", "hours_sub": "Section currently in work at each station. Red bars have gone over standard.", "fpy_def": "Operations passing quality inspection first time", "otd_def": "Sections delivered by the planned date"}, "kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_completed": 4, "fpy": 0.872, "takt_adherence": 0.71, "open_ncrs": 31, "traveled_work_hours": 412, "on_time_delivery": 0.8}, {"week": "W34", "week_start": "2026-08-17", "sections_completed": 5, "fpy": 0.881, "takt_adherence": 0.75, "open_ncrs": 29, "traveled_work_hours": 386, "on_time_delivery": 1.0}, {"week": "W35", "week_start": "2026-08-24", "sections_completed": 3, "fpy": 0.869, "takt_adherence": 0.73, "open_ncrs": 33, "traveled_work_hours": 431, "on_time_delivery": 0.75}, {"week": "W36", "week_start": "2026-08-31", "sections_completed": 5, "fpy": 0.894, "takt_adherence": 0.8, "open_ncrs": 27, "traveled_work_hours": 352, "on_time_delivery": 1.0}, {"week": "W37", "week_start": "2026-09-07", "sections_completed": 4, "fpy": 0.902, "takt_adherence": 0.78, "open_ncrs": 26, "traveled_work_hours": 340, "on_time_delivery": 1.0}, {"week": "W38", "week_start": "2026-09-14", "sections_completed": 5, "fpy": 0.897, "takt_adherence": 0.84, "open_ncrs": 24, "traveled_work_hours": 298, "on_time_delivery": 0.83}, {"week": "W39", "week_start": "2026-09-21", "sections_completed": 5, "fpy": 0.911, "takt_adherence": 0.86, "open_ncrs": 22, "traveled_work_hours": 271, "on_time_delivery": 1.0}, {"week": "W40", "week_start": "2026-09-28", "sections_completed": 6, "fpy": 0.918, "takt_adherence": 0.83, "open_ncrs": 23, "traveled_work_hours": 289, "on_time_delivery": 1.0}, {"week": "W41", "week_start": "2026-10-05", "sections_completed": 5, "fpy": 0.924, "takt_adherence": 0.88, "open_ncrs": 19, "traveled_work_hours": 236, "on_time_delivery": 1.0}], "stations": [{"station": "S1", "name": "Panel join", "section": "SEC-142", "progress": 0.92, "actual_hours": 318, "standard_hours": 300, "status": "On track", "note": "Longitudinal riveting almost complete"}, {"station": "S2", "name": "Frames and stringers", "section": "SEC-141", "progress": 0.64, "actual_hours": 402, "standard_hours": 360, "status": "Delayed", "note": "2 NCRs on frames awaiting disposition"}, {"station": "S3", "name": "Electrical installation", "section": "SEC-140", "progress": 0.81, "actual_hours": 275, "standard_hours": 290, "status": "On track", "note": "Harnesses routed, continuity test tomorrow"}, {"station": "S4", "name": "Systems and piping", "section": "SEC-139", "progress": 0.38, "actual_hours": 344, "standard_hours": 250, "status": "Stopped", "note": "Shortage: hydraulic bracket kit"}, {"station": "S5", "name": "Test and close-out", "section": "SEC-138", "progress": 0.97, "actual_hours": 188, "standard_hours": 200, "status": "On track", "note": "Final inspection and FOD check"}], "causes": [{"cause": "Parts shortage", "hours_lost": 186}, {"cause": "NCR awaiting disposition", "hours_lost": 142}, {"cause": "Waiting for quality inspection", "hours_lost": 97}, {"cause": "Tooling unavailable", "hours_lost": 71}, {"cause": "Engineering changes", "hours_lost": 54}, {"cause": "Certified staff absent", "hours_lost": 38}, {"cause": "Other", "hours_lost": 22}], "ncrs": [{"ncr": "NCR-26-1200", "opened_on": "2026-10-08", "station": "S2", "part": "Frame", "defect": "Insufficient edge distance", "disposition": "Rework", "status": "Closed", "days_open": 1}, {"ncr": "NCR-26-1183", "opened_on": "2026-10-04", "station": "S2", "part": "Stringer", "defect": "Excessive gap at joint", "disposition": "Pending", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1187", "opened_on": "2026-10-04", "station": "S1", "part": "Splice clip", "defect": "Missing sealant", "disposition": "Use as is", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1191", "opened_on": "2026-10-04", "station": "S3", "part": "Harness support", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1193", "opened_on": "2026-10-04", "station": "S5", "part": "Skin panel", "defect": "Non-conforming rivet", "disposition": "Pending", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1188", "opened_on": "2026-10-01", "station": "S2", "part": "Harness support", "defect": "Hole out of tolerance", "disposition": "Use as is", "status": "Open", "days_open": 8}, {"ncr": "NCR-26-1185", "opened_on": "2026-09-29", "station": "S2", "part": "Frame", "defect": "Missing sealant", "disposition": "Pending", "status": "Open", "days_open": 10}, {"ncr": "NCR-26-1189", "opened_on": "2026-09-29", "station": "S1", "part": "Harness support", "defect": "Hole out of tolerance", "disposition": "Repair", "status": "Closed", "days_open": 10}, {"ncr": "NCR-26-1196", "opened_on": "2026-09-27", "station": "S3", "part": "Doubler", "defect": "Non-conforming rivet", "disposition": "Scrap", "status": "Open", "days_open": 12}, {"ncr": "NCR-26-1180", "opened_on": "2026-09-26", "station": "S3", "part": "Splice clip", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1181", "opened_on": "2026-09-26", "station": "S4", "part": "Skin panel", "defect": "Insufficient edge distance", "disposition": "Pending", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1198", "opened_on": "2026-09-26", "station": "S2", "part": "Harness support", "defect": "Excessive gap at joint", "disposition": "Pending", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1192", "opened_on": "2026-09-21", "station": "S3", "part": "Door surround", "defect": "Scratch on surface treatment", "disposition": "Rework", "status": "Closed", "days_open": 18}, {"ncr": "NCR-26-1201", "opened_on": "2026-09-21", "station": "S2", "part": "Frame", "defect": "Insufficient edge distance", "disposition": "Repair", "status": "Closed", "days_open": 18}, {"ncr": "NCR-26-1195", "opened_on": "2026-09-19", "station": "S2", "part": "Systems bracket", "defect": "Torque out of spec", "disposition": "Pending", "status": "Open", "days_open": 20}, {"ncr": "NCR-26-1184", "opened_on": "2026-09-18", "station": "S1", "part": "Skin panel", "defect": "Torque out of spec", "disposition": "Use as is", "status": "Closed", "days_open": 21}, {"ncr": "NCR-26-1182", "opened_on": "2026-09-17", "station": "S1", "part": "Doubler", "defect": "Scratch on surface treatment", "disposition": "Pending", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1190", "opened_on": "2026-09-17", "station": "S2", "part": "Skin panel", "defect": "Non-conforming rivet", "disposition": "Use as is", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1194", "opened_on": "2026-09-17", "station": "S3", "part": "Frame", "defect": "Torque out of spec", "disposition": "Use as is", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1197", "opened_on": "2026-09-17", "station": "S5", "part": "Systems bracket", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Closed", "days_open": 22}, {"ncr": "NCR-26-1186", "opened_on": "2026-09-15", "station": "S1", "part": "Frame", "defect": "Non-conforming rivet", "disposition": "Repair", "status": "Closed", "days_open": 24}, {"ncr": "NCR-26-1199", "opened_on": "2026-09-14", "station": "S4", "part": "Stringer", "defect": "Insufficient edge distance", "disposition": "Repair", "status": "Closed", "days_open": 25}], "depts": [{"id": "ASM", "name": "Final assembly", "metric": "Takt adherence", "value": 0.88, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 214, "note": "Fuselage pulse line, 5 stations. S4 stopped for missing parts.", "kind": "hangar", "x": 0, "z": -1, "w": 11, "d": 6.5, "h": 4.2}, {"id": "MCH", "name": "Machining", "metric": "OEE", "value": 0.78, "target": 0.75, "unit": "pct", "higher_is_better": true, "headcount": 96, "note": "5-axis cells running two shifts.", "kind": "box", "x": -14, "z": -7, "w": 6, "d": 5, "h": 2.2}, {"id": "CMP", "name": "Composites", "metric": "First pass yield", "value": 0.81, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 88, "note": "Porosity scrap on autoclave cycle 3.", "kind": "autoclave", "x": -3, "z": -11, "w": 7, "d": 3.6, "h": 2.6}, {"id": "SRF", "name": "Surface treatment", "metric": "On-time output", "value": 0.96, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 34, "note": "Anodizing line on plan.", "kind": "box", "x": 9, "z": -10.5, "w": 5, "d": 4, "h": 2.0}, {"id": "PNT", "name": "Paint", "metric": "On-time output", "value": 0.97, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 41, "note": "Booth 2 back from maintenance.", "kind": "box", "x": 15, "z": -2, "w": 5, "d": 6, "h": 2.8}, {"id": "LOG", "name": "Logistics", "metric": "Kit completeness", "value": 0.95, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 57, "note": "Kits complete except hydraulic brackets.", "kind": "box", "x": -14, "z": 8, "w": 7, "d": 5, "h": 2.4}, {"id": "QUA", "name": "Quality", "metric": "NCR disposition time", "value": 6.2, "target": 3.0, "unit": "days", "higher_is_better": false, "headcount": 39, "note": "Disposition backlog on frames and panels.", "kind": "office", "x": 3, "z": 9.5, "w": 5, "d": 3.5, "h": 2.2}, {"id": "ENG", "name": "Engineering", "metric": "Changes released on time", "value": 0.92, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 63, "note": "3 changes in work on systems routing.", "kind": "office", "x": 12, "z": 9, "w": 5, "d": 4, "h": 3.4}], "frictions": [{"id": "F1", "from": "LOG", "to": "ASM", "issue": "Parts shortage", "hours_lost": 186, "detail": "Hydraulic bracket kits not delivered to station S4."}, {"id": "F2", "from": "QUA", "to": "ASM", "issue": "NCRs awaiting disposition", "hours_lost": 142, "detail": "Frames at S2 waiting for a disposition decision."}, {"id": "F3", "from": "CMP", "to": "QUA", "issue": "Panels held for porosity review", "hours_lost": 64, "detail": "Composite panels queued for ultrasonic inspection."}, {"id": "F4", "from": "ENG", "to": "ASM", "issue": "Late engineering changes", "hours_lost": 54, "detail": "Systems routing change released after S4 had started."}]}, "ship": {"meta": {"title": "Shipyard Site Twin", "eyebrow": "Shipyard · Digital twin", "line_dept_id": "BLK", "line_dept": "Block assembly", "line_title": "Grand-block line", "line_short": "Block line", "unit": "hull block", "unit_short": "block", "station_sub": "Blocks move from S1 to S5 at every pulse, then go to the dry dock for erection. Takt time is 6 working days per station.", "hours_sub": "Block currently in work at each station. Red bars have gone over standard.", "fpy_def": "Welds passing NDT first time", "otd_def": "Blocks delivered to the dock by the planned date"}, "kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_completed": 3, "fpy": 0.861, "takt_adherence": 0.68, "open_ncrs": 38, "traveled_work_hours": 520, "on_time_delivery": 0.75}, {"week": "W34", "week_start": "2026-08-17", "sections_completed": 4, "fpy": 0.874, "takt_adherence": 0.72, "open_ncrs": 35, "traveled_work_hours": 488, "on_time_delivery": 1.0}, {"week": "W35", "week_start": "2026-08-24", "sections_completed": 3, "fpy": 0.858, "takt_adherence": 0.7, "open_ncrs": 39, "traveled_work_hours": 541, "on_time_delivery": 0.67}, {"week": "W36", "week_start": "2026-08-31", "sections_completed": 4, "fpy": 0.869, "takt_adherence": 0.77, "open_ncrs": 33, "traveled_work_hours": 463, "on_time_delivery": 1.0}, {"week": "W37", "week_start": "2026-09-07", "sections_completed": 4, "fpy": 0.883, "takt_adherence": 0.74, "open_ncrs": 31, "traveled_work_hours": 430, "on_time_delivery": 0.8}, {"week": "W38", "week_start": "2026-09-14", "sections_completed": 5, "fpy": 0.879, "takt_adherence": 0.81, "open_ncrs": 30, "traveled_work_hours": 402, "on_time_delivery": 1.0}, {"week": "W39", "week_start": "2026-09-21", "sections_completed": 4, "fpy": 0.892, "takt_adherence": 0.79, "open_ncrs": 27, "traveled_work_hours": 377, "on_time_delivery": 0.83}, {"week": "W40", "week_start": "2026-09-28", "sections_completed": 5, "fpy": 0.887, "takt_adherence": 0.83, "open_ncrs": 28, "traveled_work_hours": 391, "on_time_delivery": 1.0}, {"week": "W41", "week_start": "2026-10-05", "sections_completed": 5, "fpy": 0.901, "takt_adherence": 0.86, "open_ncrs": 24, "traveled_work_hours": 318, "on_time_delivery": 1.0}], "stations": [{"station": "S1", "name": "Panel joining", "section": "GB-14", "progress": 0.88, "actual_hours": 412, "standard_hours": 400, "status": "On track", "note": "Butt welds on deck panels nearly done"}, {"station": "S2", "name": "Web frames and stiffeners", "section": "GB-13", "progress": 0.61, "actual_hours": 538, "standard_hours": 470, "status": "Delayed", "note": "3 welds awaiting ultrasonic testing"}, {"station": "S3", "name": "Electrical and HVAC", "section": "GB-12", "progress": 0.77, "actual_hours": 366, "standard_hours": 380, "status": "On track", "note": "Cable trays fitted, HVAC ducts tomorrow"}, {"station": "S4", "name": "Machinery seats and piping", "section": "GB-11", "progress": 0.34, "actual_hours": 455, "standard_hours": 320, "status": "Stopped", "note": "Shortage: pipe spool kit"}, {"station": "S5", "name": "Tightness test and coating", "section": "GB-10", "progress": 0.95, "actual_hours": 240, "standard_hours": 250, "status": "On track", "note": "Tightness test passed, coating in progress"}], "causes": [{"cause": "Pipe spools missing", "hours_lost": 172}, {"cause": "Welds awaiting NDT", "hours_lost": 131}, {"cause": "Panel weld repairs", "hours_lost": 78}, {"cause": "Crane unavailable", "hours_lost": 63}, {"cause": "Design changes", "hours_lost": 49}, {"cause": "Certified welders absent", "hours_lost": 41}, {"cause": "Other", "hours_lost": 19}], "ncrs": [{"ncr": "NCR-26-3414", "opened_on": "2026-10-07", "station": "S1", "part": "Longitudinal stiffener", "defect": "Missing weld", "disposition": "Pending", "status": "Open", "days_open": 2}, {"ncr": "NCR-26-3412", "opened_on": "2026-10-06", "station": "S1", "part": "Cable tray support", "defect": "Weld undercut", "disposition": "Repair", "status": "Closed", "days_open": 3}, {"ncr": "NCR-26-3431", "opened_on": "2026-10-06", "station": "S2", "part": "Deck panel", "defect": "Wrong bevel angle", "disposition": "Rework", "status": "Closed", "days_open": 3}, {"ncr": "NCR-26-3421", "opened_on": "2026-10-03", "station": "S3", "part": "Cable tray support", "defect": "Weld undercut", "disposition": "Scrap", "status": "Closed", "days_open": 6}, {"ncr": "NCR-26-3427", "opened_on": "2026-10-03", "station": "S2", "part": "Pipe spool", "defect": "Plate misalignment", "disposition": "Use as is", "status": "Closed", "days_open": 6}, {"ncr": "NCR-26-3429", "opened_on": "2026-10-03", "station": "S2", "part": "Cable tray support", "defect": "Missing weld", "disposition": "Repair", "status": "Closed", "days_open": 6}, {"ncr": "NCR-26-3410", "opened_on": "2026-09-28", "station": "S3", "part": "Deck panel", "defect": "Porosity in weld", "disposition": "Pending", "status": "Open", "days_open": 11}, {"ncr": "NCR-26-3420", "opened_on": "2026-09-28", "station": "S1", "part": "Web frame", "defect": "Lamination in plate", "disposition": "Scrap", "status": "Closed", "days_open": 11}, {"ncr": "NCR-26-3415", "opened_on": "2026-09-25", "station": "S2", "part": "Longitudinal stiffener", "defect": "Porosity in weld", "disposition": "Rework", "status": "Closed", "days_open": 14}, {"ncr": "NCR-26-3433", "opened_on": "2026-09-21", "station": "S2", "part": "Deck panel", "defect": "Wrong bevel angle", "disposition": "Repair", "status": "Closed", "days_open": 18}, {"ncr": "NCR-26-3416", "opened_on": "2026-09-20", "station": "S1", "part": "Web frame", "defect": "Weld undercut", "disposition": "Repair", "status": "Closed", "days_open": 19}, {"ncr": "NCR-26-3418", "opened_on": "2026-09-20", "station": "S2", "part": "Pipe spool", "defect": "Distortion out of tolerance", "disposition": "Pending", "status": "Open", "days_open": 19}, {"ncr": "NCR-26-3417", "opened_on": "2026-09-19", "station": "S3", "part": "Machinery seat", "defect": "Wrong bevel angle", "disposition": "Rework", "status": "Open", "days_open": 20}, {"ncr": "NCR-26-3422", "opened_on": "2026-09-17", "station": "S5", "part": "Machinery seat", "defect": "Coating thickness low", "disposition": "Rework", "status": "Closed", "days_open": 22}, {"ncr": "NCR-26-3423", "opened_on": "2026-09-16", "station": "S5", "part": "Bracket", "defect": "Porosity in weld", "disposition": "Rework", "status": "Closed", "days_open": 23}, {"ncr": "NCR-26-3426", "opened_on": "2026-09-16", "station": "S1", "part": "Bracket", "defect": "Coating thickness low", "disposition": "Repair", "status": "Open", "days_open": 23}, {"ncr": "NCR-26-3430", "opened_on": "2026-09-16", "station": "S3", "part": "Bulkhead", "defect": "Plate misalignment", "disposition": "Repair", "status": "Closed", "days_open": 23}, {"ncr": "NCR-26-3425", "opened_on": "2026-09-15", "station": "S4", "part": "Bracket", "defect": "Missing weld", "disposition": "Use as is", "status": "Open", "days_open": 24}, {"ncr": "NCR-26-3428", "opened_on": "2026-09-15", "station": "S5", "part": "Bracket", "defect": "Porosity in weld", "disposition": "Rework", "status": "Closed", "days_open": 24}, {"ncr": "NCR-26-3419", "opened_on": "2026-09-13", "station": "S1", "part": "Pipe spool", "defect": "Wrong bevel angle", "disposition": "Rework", "status": "Open", "days_open": 26}, {"ncr": "NCR-26-3411", "opened_on": "2026-09-12", "station": "S1", "part": "Bulkhead", "defect": "Weld undercut", "disposition": "Repair", "status": "Closed", "days_open": 27}, {"ncr": "NCR-26-3413", "opened_on": "2026-09-12", "station": "S4", "part": "Deck panel", "defect": "Lamination in plate", "disposition": "Repair", "status": "Open", "days_open": 27}, {"ncr": "NCR-26-3424", "opened_on": "2026-09-12", "station": "S4", "part": "Web frame", "defect": "Weld undercut", "disposition": "Rework", "status": "Closed", "days_open": 27}, {"ncr": "NCR-26-3432", "opened_on": "2026-09-12", "station": "S1", "part": "Longitudinal stiffener", "defect": "Lamination in plate", "disposition": "Use as is", "status": "Closed", "days_open": 27}], "depts": [{"id": "BLK", "name": "Block assembly", "metric": "Takt adherence", "value": 0.86, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 238, "note": "Grand-block line, 5 stations. S4 stopped for missing pipe spools.", "kind": "hangar", "x": -1, "z": -2, "w": 11, "d": 6.5, "h": 4.4}, {"id": "STL", "name": "Steel stockyard and cutting", "metric": "Plates cut on plan", "value": 0.97, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 44, "note": "Plasma cutting ahead of plan.", "kind": "box", "x": -16, "z": -2, "w": 6, "d": 4, "h": 1.6}, {"id": "PNL", "name": "Panel line", "metric": "Weld first pass yield", "value": 0.84, "target": 0.92, "unit": "pct", "higher_is_better": true, "headcount": 72, "note": "Distortion repairs on thin deck panels.", "kind": "box", "x": -13, "z": -9.5, "w": 8, "d": 4.5, "h": 2.6}, {"id": "PNT", "name": "Blasting and coating", "metric": "Coating on time", "value": 0.93, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 52, "note": "Cell 2 running humidity-controlled.", "kind": "box", "x": 13, "z": -8, "w": 6, "d": 5, "h": 3.0}, {"id": "DOK", "name": "Dry dock", "metric": "Erection on schedule", "value": 0.92, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 86, "note": "Hull 2 erection at block 9 of 22.", "kind": "dock", "x": 12, "z": 6.5, "w": 4.4, "d": 11.5, "h": 3.0}, {"id": "LOG", "name": "Logistics", "metric": "Kit completeness", "value": 0.95, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 48, "note": "Kits complete except pipe spools.", "kind": "box", "x": -14, "z": 8.5, "w": 7, "d": 5, "h": 2.4}, {"id": "QUA", "name": "Quality", "metric": "NDT backlog", "value": 5.4, "target": 3.0, "unit": "days", "higher_is_better": false, "headcount": 31, "note": "Ultrasonic testing queue on butt welds.", "kind": "office", "x": -3.5, "z": 9, "w": 5, "d": 3.5, "h": 2.2}, {"id": "ENG", "name": "Engineering", "metric": "Drawings released on time", "value": 0.91, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 58, "note": "Piping routing revision in work.", "kind": "office", "x": 3.5, "z": 9, "w": 4.5, "d": 3.5, "h": 3.2}], "frictions": [{"id": "F1", "from": "LOG", "to": "BLK", "issue": "Pipe spools missing", "hours_lost": 172, "detail": "Pipe spool kits for block GB-11 not delivered to station S4."}, {"id": "F2", "from": "QUA", "to": "BLK", "issue": "Welds awaiting NDT", "hours_lost": 131, "detail": "Butt welds on GB-13 at S2 waiting for ultrasonic testing."}, {"id": "F3", "from": "PNL", "to": "BLK", "issue": "Panels late from the panel line", "hours_lost": 78, "detail": "Deck panels held for distortion repair before S1."}, {"id": "F4", "from": "ENG", "to": "BLK", "issue": "Late design changes", "hours_lost": 49, "detail": "Revised piping routing released after S4 had started."}]}};
+const SECTOR = new URLSearchParams(location.search).get('site') === 'shipyard' ? 'ship' : 'aero';
+const DATA = ALL[SECTOR];
+const T = DATA.meta;
+document.title = T.title + ' · Concept demo';
+document.querySelectorAll('[data-t]').forEach((e) => { e.textContent = T[e.dataset.t]; });
+document.querySelectorAll('.sector a').forEach((a) => { if (a.dataset.s === SECTOR) a.setAttribute('aria-current', 'page'); });
 
 (function () {
   const C = { accent: '#5ec8f2', accent2: '#b9a6ff', grid: '#1b2731', axis: '#33434f', muted: '#8c9ba8', fg: '#e7eef3', ok: '#4dd4a3', warn: '#f3c64d', bad: '#ff6363', dim: '#3a4a56' };
@@ -358,7 +370,8 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
   const stationById = Object.fromEntries(stations.map((s) => [s.station, s]));
   const deptById = Object.fromEntries(depts.map((d) => [d.id, d]));
   const frById = Object.fromEntries(frictions.map((f) => [f.id, f]));
-  const LINE_DEPT = 'ASM';
+  const LINE_DEPT = T.line_dept_id;
+  const LINE_LABEL = T.line_dept + ' · ' + T.line_short;
 
   /* state: view is 'site' or 'line'; sel is {type: 'dept'|'friction'|'station', id} or null */
   const state = { view: 'line', sel: null };
@@ -372,7 +385,7 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
     const below = depts.filter((d) => d.status === 'Below target');
     p.append('Week ', b(last.week), ': first pass yield at ', b(pct1(last.fpy)), ' and ', b(pct0(last.takt_adherence)), ' of station moves on takt.');
     if (stop) p.append(' Bottleneck: ', b(stop.station + ' ' + stop.name), '. ' + stop.note + '.');
-    p.append(' Click a fuselage section to inspect its station, or open the site map to see which of the ', b(below.length + ' departments below target'), ' are slowing the line.');
+    p.append(' Click a ' + T.unit + ' to inspect its station, or open the site map to see which of the ', b(below.length + ' departments below target'), ' are slowing the line.');
   })();
 
   /* ---------- Selection and views ---------- */
@@ -411,9 +424,9 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
     if (state.view === 'line') {
       const go = button(null, 'Site map →');
       go.addEventListener('click', () => select('dept', LINE_DEPT));
-      crumbs.append(el('span', null, 'Final assembly · Pulse line'), go);
+      crumbs.append(el('span', null, LINE_LABEL), go);
     } else {
-      const back = button(null, '← Pulse line');
+      const back = button(null, '← ' + T.line_short);
       back.addEventListener('click', () => setView('line'));
       crumbs.append(back, el('span', null, 'Site map'));
     }
@@ -423,7 +436,7 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
     if (state.view === 'site') { item(C.ok, 'On target'); item(C.bad, 'Below target'); item(C.warn, 'Friction', true); }
     else { item(C.ok, 'On track'); item(C.warn, 'Delayed'); item(C.bad, 'Stopped'); }
     const touch = window.matchMedia('(hover: none)').matches;
-    $('#stage-hint').textContent = (touch ? 'Swipe sideways to rotate · Tap ' : 'Drag to rotate · Scroll to zoom · Click ') + (state.view === 'site' ? 'a building or an arc' : 'a section');
+    $('#stage-hint').textContent = (touch ? 'Swipe sideways to rotate · Tap ' : 'Drag to rotate · Scroll to zoom · Click ') + (state.view === 'site' ? 'a building or an arc' : 'a ' + T.unit_short);
   }
 
   /* ---------- Inspector ---------- */
@@ -462,16 +475,16 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
       box.append(kvList([['Below target', below.map((d) => d.name).join(', ')], ['Friction points', String(frictions.length)], ['Hours lost', int(d3.sum(frictions, (f) => f.hours_lost)) + ' h in 8 weeks']]));
       box.append(el('div', 'insp-code', 'Largest friction'));
       frictionRows(frictions.slice().sort((a, z) => z.hours_lost - a.hours_lost).slice(0, 3), box);
-      const go = button('btn', 'Enter final assembly →');
+      const go = button('btn', 'Enter ' + T.line_dept.toLowerCase() + ' →');
       go.addEventListener('click', () => setView('line'));
       box.append(go);
       return;
     }
     if (state.view === 'line' && !sel) {
       const counts = d3.rollup(stations, (v) => v.length, (s) => s.status);
-      box.append(el('div', 'insp-code', 'Final assembly · Pulse line'), el('div', 'insp-name', stations.length + ' stations, ' + (counts.get('Stopped') || 0) + ' stopped'));
+      box.append(el('div', 'insp-code', LINE_LABEL), el('div', 'insp-name', stations.length + ' stations, ' + (counts.get('Stopped') || 0) + ' stopped'));
       box.append(kvList([['On track', String(counts.get('On track') || 0)], ['Delayed', String(counts.get('Delayed') || 0)], ['Stopped', String(counts.get('Stopped') || 0)], ['Takt adherence', pct0(last.takt_adherence) + ' in ' + last.week]]));
-      box.append(el('p', 'sub', 'Each fuselage section sits at one station. Click a section, or a station below, to inspect it.'));
+      box.append(el('p', 'sub', 'Each ' + T.unit + ' sits at one station. Click a ' + T.unit_short + ', or a station below, to inspect it.'));
       const go = button('btn', 'See the whole site →');
       go.addEventListener('click', () => select('dept', LINE_DEPT));
       box.append(go);
@@ -488,7 +501,7 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
       const related = frictions.filter((f) => f.from === d.id || f.to === d.id);
       if (related.length) { box.append(el('div', 'insp-code', 'Friction involving ' + d.id)); frictionRows(related, box); }
       if (d.id === LINE_DEPT) {
-        const go = button('btn primary', 'Open the pulse line →');
+        const go = button('btn primary', 'Open the ' + T.line_short.toLowerCase() + ' →');
         go.addEventListener('click', () => setView('line'));
         box.append(go);
       }
@@ -566,11 +579,11 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
 
   /* ---------- Line: KPI tiles ---------- */
   const METRICS = [
-    { k: 'fpy', label: 'First pass yield', def: 'Operations passing quality inspection first time', fmt: pct1, up: true, pts: true },
+    { k: 'fpy', label: 'First pass yield', def: T.fpy_def, fmt: pct1, up: true, pts: true },
     { k: 'takt_adherence', label: 'Takt adherence', def: 'Station moves completed on time', fmt: pct0, up: true, pts: true },
     { k: 'open_ncrs', label: 'Open NCRs', def: 'Non-conformances awaiting closure, whole line', fmt: int, up: false },
     { k: 'traveled_work_hours', label: 'Traveled work', def: 'Hours carried past their planned station', fmt: (v) => int(v) + ' h', up: false },
-    { k: 'on_time_delivery', label: 'On-time delivery', def: 'Sections delivered by the planned date', fmt: pct0, up: true, pts: true }
+    { k: 'on_time_delivery', label: 'On-time delivery', def: T.otd_def, fmt: pct0, up: true, pts: true }
   ];
   $('#kpi-sub').textContent = 'Week ' + last.week + ', with the change from ' + prev.week;
   const sparks = [];
@@ -779,8 +792,20 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
     const sgrid = new THREE.GridHelper(46, 46, 0x1f3a4a, 0x132028); sgrid.position.y = 0.01; sgrid.scale.z = 32 / 46; sgrid.material.transparent = true; sgrid.material.opacity = 0.65; site.add(sgrid);
     const fencePts = [[-22, -15], [22, -15], [22, 15], [-22, 15]].map(([x, z]) => new THREE.Vector3(x, 0.03, z));
     site.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(fencePts), ghostLine));
-    const road = new THREE.Mesh(new THREE.PlaneGeometry(44, 1.4), new THREE.MeshStandardMaterial({ color: 0x131d24, roughness: 1 }));
-    road.rotation.x = -Math.PI / 2; road.position.set(0, 0.02, 3.6); site.add(road);
+    const roadLen = SECTOR === 'ship' ? 30 : 44;
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(roadLen, 1.4), new THREE.MeshStandardMaterial({ color: 0x131d24, roughness: 1 }));
+    road.rotation.x = -Math.PI / 2; road.position.set(-22 + roadLen / 2, 0.02, 3.6); site.add(road);
+    if (SECTOR === 'ship') {
+      // Sea along the south edge, with a quay line and a few swell lines.
+      const sea = new THREE.Mesh(new THREE.PlaneGeometry(52, 6), new THREE.MeshStandardMaterial({ color: 0x06141c, metalness: 0.1, roughness: 0.6, emissive: 0x05324a, emissiveIntensity: 0.22 }));
+      sea.rotation.x = -Math.PI / 2; sea.position.set(0, 0.015, 15.4); site.add(sea);
+      site.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-26, 0.05, 12.4), new THREE.Vector3(26, 0.05, 12.4)]), ghostLine));
+      for (let k = 0; k < 4; k++) {
+        const z = 13.4 + k * 1.1, pts = [];
+        for (let x = -26; x <= 26; x += 0.5) pts.push(new THREE.Vector3(x, 0.03, z + Math.sin(x * 0.7 + k) * 0.12));
+        site.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x5ec8f2, transparent: true, opacity: 0.14 })));
+      }
+    }
 
     const buildings = [];
     depts.forEach((d, i) => {
@@ -789,9 +814,21 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
       const wallMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0x2a3843).lerp(col, 0.28), metalness: 0.35, roughness: 0.6, emissive: col, emissiveIntensity: 0.12 });
       const edgeMat = new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.75 });
       const parts = [];
-      const add = (geo, y) => { const m = new THREE.Mesh(geo, wallMat); m.position.y = y; m.userData.id = d.id; g.add(m); parts.push(m); pickables.site.push(m);
-        const e = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), edgeMat); e.position.y = y; g.add(e); };
-      if (d.kind === 'hangar') {
+      const add = (geo, y, x = 0, z = 0) => { const m = new THREE.Mesh(geo, wallMat); m.position.set(x, y, z); m.userData.id = d.id; g.add(m); parts.push(m); pickables.site.push(m);
+        const e = new THREE.LineSegments(new THREE.EdgesGeometry(geo, 30), edgeMat); e.position.set(x, y, z); g.add(e); };
+      if (d.kind === 'dock') {
+        // Dry dock: a basin with low walls, open to the sea, spanned by a gantry crane.
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(d.w, d.d), new THREE.MeshStandardMaterial({ color: 0x081016, roughness: 1 }));
+        floor.rotation.x = -Math.PI / 2; floor.position.y = 0.03; g.add(floor);
+        const t = 0.35, wh = 0.45;
+        add(new THREE.BoxGeometry(t, wh, d.d), wh / 2, -d.w / 2 + t / 2, 0);
+        add(new THREE.BoxGeometry(t, wh, d.d), wh / 2, d.w / 2 - t / 2, 0);
+        add(new THREE.BoxGeometry(d.w, wh, t), wh / 2, 0, -d.d / 2 + t / 2);
+        const span = d.w + 1.2, cz = -d.d * 0.12;
+        [-1, 1].forEach((side) => add(new THREE.BoxGeometry(0.22, d.h, 0.5), d.h / 2, side * span / 2, cz));
+        add(new THREE.BoxGeometry(span + 0.3, 0.3, 0.6), d.h, 0, cz);
+        add(new THREE.BoxGeometry(0.5, 0.35, 0.7), d.h - 0.3, 0.6, cz);
+      } else if (d.kind === 'hangar') {
         const wallH = d.h * 0.55;
         add(new THREE.BoxGeometry(d.w, wallH, d.d), wallH / 2);
         const arch = new THREE.Shape(); arch.moveTo(-d.d / 2, 0); arch.quadraticCurveTo(0, (d.h - wallH) * 2, d.d / 2, 0); arch.lineTo(-d.d / 2, 0);
@@ -847,21 +884,93 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
     /* ----- Fuselage line ----- */
     const line = new THREE.Group(); scene.add(line);
     const lgrid = new THREE.GridHelper(36, 72, 0x1f3a4a, 0x132028); lgrid.position.y = -2.1; lgrid.material.transparent = true; lgrid.material.opacity = 0.7; line.add(lgrid);
-    const R = 1, L = 1.7, GAP = 0.16, N = stations.length;
+    const SHIP = SECTOR === 'ship';
+    const R = 1, L = 1.7, GAP = SHIP ? 0.26 : 0.16, N = stations.length;
+    const RING = SHIP ? 1.4 : R * 1.14, TAG_Y = SHIP ? 1.75 : R + 0.5;
     const total = N * L + (N - 1) * GAP;
     const xAt = (i) => -total / 2 + L / 2 + i * (L + GAP);
     const thinMat = new THREE.MeshStandardMaterial({ color: 0x6f7e89, metalness: 0.5, roughness: 0.5 });
     const glassMat = new THREE.MeshStandardMaterial({ color: 0x08131b, emissive: 0x5ec8f2, emissiveIntensity: 0.18, metalness: 0.2, roughness: 0.2 });
     const innerMat = new THREE.MeshStandardMaterial({ color: 0x0c141a, roughness: 1, side: THREE.BackSide });
+
+    /* Hull block: a U-shaped shell (flat bottom, bilge radius, open deck) extruded along the ship's length. */
+    const HW = 1.08, BOT = -0.72, TOP = 0.5, RB = 0.32, TH = 0.035;
+    function uPts(hw, bot, top, r) {
+      const p = [new THREE.Vector2(-hw, top)];
+      for (let k = 0; k <= 8; k++) { const a = Math.PI + (k / 8) * Math.PI / 2; p.push(new THREE.Vector2(-hw + r + Math.cos(a) * r, bot + r + Math.sin(a) * r)); }
+      for (let k = 0; k <= 8; k++) { const a = Math.PI * 1.5 + (k / 8) * Math.PI / 2; p.push(new THREE.Vector2(hw - r + Math.cos(a) * r, bot + r + Math.sin(a) * r)); }
+      p.push(new THREE.Vector2(hw, top));
+      return p;
+    }
+    function band(outer, inner, depth) {
+      const geo = new THREE.ExtrudeGeometry(new THREE.Shape(outer.concat(inner.slice().reverse())), { depth, bevelEnabled: false });
+      geo.translate(0, 0, -depth / 2); geo.rotateY(Math.PI / 2);
+      return geo;
+    }
+    function buildBlock(g, id, skinMat, frameMat) {
+      const shell = new THREE.Mesh(band(uPts(HW, BOT, TOP, RB), uPts(HW - TH, BOT + TH, TOP, RB - TH), L), skinMat);
+      shell.userData.id = id; g.add(shell); pickables.line.push(shell);
+      [-1, 1].forEach((side) => {
+        const f = new THREE.Mesh(band(uPts(HW + 0.025, BOT - 0.025, TOP + 0.02, RB + 0.025), uPts(HW - 0.1, BOT + 0.1, TOP + 0.02, RB - 0.08), 0.05), frameMat);
+        f.position.x = side * (L / 2 - 0.025); g.add(f);
+      });
+      for (let k = 1; k < 6; k++) {
+        const x = -L / 2 + (k * L) / 6;
+        const web = new THREE.Mesh(band(uPts(HW - TH, BOT + TH, TOP - 0.03, RB - TH), uPts(HW - 0.14, BOT + 0.14, TOP - 0.03, RB - 0.12), 0.022), thinMat);
+        web.position.x = x; g.add(web);
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.05, 2 * (HW - TH)), thinMat); beam.position.set(x, TOP - 0.05, 0); g.add(beam);
+      }
+      const girder = new THREE.Mesh(new THREE.BoxGeometry(L - 0.06, 0.16, 0.03), thinMat); girder.position.y = BOT + TH + 0.08; g.add(girder);
+      const prof = uPts(HW * 1.004, BOT - 0.004, TOP, RB), pts = [];
+      [1, 5, 9, 10, 14, 18].forEach((j) => { const v = prof[j]; pts.push(-L / 2, v.y, -v.x, L / 2, v.y, -v.x); });
+      [-1, 1].forEach((side) => pts.push(-L / 2, 0, side * HW * 1.004, L / 2, 0, side * HW * 1.004));
+      const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      g.add(new THREE.LineSegments(sg, new THREE.LineBasicMaterial({ color: 0x2e3c47, transparent: true, opacity: 0.7 })));
+    }
+    /* Ghost hull ends: cross-sections lofted along the length, drawn as lines. */
+    function loftLines(x0, dir, len, steps, prof) {
+      const rows = [];
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps, p = prof(t), hw = Math.max(0.01, p.hw);
+        const r = Math.max(0.005, Math.min(p.r, hw * 0.95, (p.top - p.bot) * 0.95));
+        rows.push(uPts(hw, p.bot, p.top, r).map((v) => new THREE.Vector3(x0 + dir * t * len, v.y, -v.x)));
+      }
+      const pts = [], cols = rows[0].length;
+      rows.forEach((row) => { for (let j = 0; j < cols - 1; j++) pts.push(row[j], row[j + 1]); });
+      for (let j = 0; j < cols; j += (j === cols - 2 ? 1 : 2)) for (let i = 0; i < steps; i++) pts.push(rows[i][j], rows[i + 1][j]);
+      line.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), ghostLine));
+      return rows;
+    }
+    const ghostBox = (w, h, d, x, y, z) => { const m = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, h, d)), ghostLine); m.position.set(x, y, z); line.add(m); };
+    const ghostPath = (pts, loop) => line.add(new (loop ? THREE.LineLoop : THREE.Line)(new THREE.BufferGeometry().setFromPoints(pts), ghostLine));
+    function shipGhost() {
+      loftLines(xAt(0) - L / 2 - GAP, -1, 3.0, 12, (t) => ({ hw: HW * (1 - Math.pow(t, 1.7)), bot: BOT + (TOP - BOT) * 0.5 * Math.pow(t, 2.2), top: TOP + 0.3 * t * t, r: RB }));
+      const x0 = xAt(N - 1) + L / 2 + GAP, SL = 2.2;
+      const stern = loftLines(x0, 1, SL, 10, (t) => ({ hw: HW * (1 - 0.28 * Math.pow(t, 1.5)), bot: BOT + (TOP - BOT) * 0.72 * Math.pow(t, 1.4), top: TOP + 0.08 * t, r: RB }));
+      const tr = stern[stern.length - 1]; ghostPath([tr[0], tr[tr.length - 1]]);
+      const rx = x0 + SL * 0.8;
+      ghostPath([new THREE.Vector3(rx - 0.2, -0.08, 0), new THREE.Vector3(rx + 0.25, -0.08, 0), new THREE.Vector3(rx + 0.25, -0.62, 0), new THREE.Vector3(rx - 0.12, -0.62, 0)], true);
+      const prop = [];
+      for (let k = 0; k < 24; k++) { const a = (k / 24) * Math.PI * 2; prop.push(new THREE.Vector3(rx - 0.45, -0.38 + Math.sin(a) * 0.26, Math.cos(a) * 0.26)); }
+      ghostPath(prop, true);
+      const deck = TOP + 0.08;
+      ghostBox(1.7, 1.1, 1.9, x0 + 0.6, deck + 0.55, 0);
+      ghostBox(0.9, 0.4, 2.5, x0 + 0.1, deck + 1.3, 0);
+      ghostBox(0.5, 0.75, 0.55, x0 + 1.1, deck + 1.48, 0);
+      ghostPath([new THREE.Vector3(x0 - 0.05, deck + 1.5, 0), new THREE.Vector3(x0 - 0.05, deck + 2.3, 0)]);
+    }
+
     const sections = [];
     stations.forEach((s, i) => {
       const g = new THREE.Group(); line.add(g);
       const col = new THREE.Color(STATUS_COLOR[s.status]);
       const skinMat = new THREE.MeshStandardMaterial({ color: 0xb9c5ce, metalness: 0.62, roughness: 0.36, emissive: col, emissiveIntensity: 0.06 });
+      const frameMat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.55, metalness: 0.2, roughness: 0.5 });
+      if (SHIP) buildBlock(g, s.station, skinMat, frameMat);
+      else {
       const skin = new THREE.Mesh(new THREE.CylinderGeometry(R, R, L, 72, 1, true), skinMat);
       skin.rotation.z = Math.PI / 2; skin.userData.id = s.station; g.add(skin); pickables.line.push(skin);
       const inner = new THREE.Mesh(new THREE.CylinderGeometry(R * 0.985, R * 0.985, L, 48, 1, true), innerMat); inner.rotation.z = Math.PI / 2; g.add(inner);
-      const frameMat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.55, metalness: 0.2, roughness: 0.5 });
       for (let k = 0; k <= 6; k++) {
         const edge = k === 0 || k === 6;
         const ring = new THREE.Mesh(new THREE.TorusGeometry(R * 1.004, edge ? 0.024 : 0.007, 8, 120), edge ? frameMat : thinMat);
@@ -880,17 +989,20 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
         [1, -1].forEach((side) => { dummy.position.set(wx, wy, wz * side); dummy.rotation.set(-Math.atan2(wy, wz * side), 0, 0); dummy.updateMatrix(); wins.setMatrixAt(n++, dummy.matrix); });
       }
       g.add(wins);
-      const trackRing = new THREE.Mesh(new THREE.TorusGeometry(R * 1.14, 0.012, 6, 120), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.18 }));
+      }
+      const trackRing = new THREE.Mesh(new THREE.TorusGeometry(RING, 0.012, 6, 120), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.18 }));
       trackRing.rotation.y = Math.PI / 2; g.add(trackRing);
-      const arc = new THREE.Mesh(new THREE.TorusGeometry(R * 1.14, 0.032, 8, 160, Math.max(0.01, s.progress * Math.PI * 2)), new THREE.MeshBasicMaterial({ color: col }));
+      const arc = new THREE.Mesh(new THREE.TorusGeometry(RING, 0.032, 8, 160, Math.max(0.01, s.progress * Math.PI * 2)), new THREE.MeshBasicMaterial({ color: col }));
       arc.rotation.y = Math.PI / 2; arc.rotateZ(Math.PI / 2); g.add(arc);
       sections.push({ id: s.station, g, skinMat, frameMat, baseX: xAt(i), lift: 0, glow: 0.06 });
       addTag('line', 'station', s.station, (t) => {
         const dot = el('i'); dot.style.background = STATUS_COLOR[s.status];
         t.append(dot, s.station + ' ', el('span', null, pct0(s.progress)));
         t.setAttribute('aria-label', s.station + ' ' + s.name + ', ' + s.status + ', ' + pct0(s.progress) + ' complete');
-      }, () => { const sec = sections[i]; return new THREE.Vector3(sec.g.position.x, sec.g.position.y + R + 0.5, 0); });
+      }, () => { const sec = sections[i]; return new THREE.Vector3(sec.g.position.x, sec.g.position.y + TAG_Y, 0); });
     });
+    if (SHIP) shipGhost();
+    else {
     const NL = 2.5, nosePts = [];
     for (let k = 0; k <= 20; k++) { const t = k / 20; nosePts.push(new THREE.Vector2(R * Math.sqrt(Math.max(0, 1 - t * t)) * (1 - 0.06 * t), t * NL)); }
     const nose = new THREE.Mesh(new THREE.LatheGeometry(nosePts, 40), ghostWire);
@@ -911,6 +1023,7 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
       const wing = new THREE.Shape(); wing.moveTo(0, 0); wing.lineTo(2.9, 0); wing.lineTo(3.9, 5.4 * side); wing.lineTo(3.0, 5.4 * side); wing.closePath();
       outline(wing, (m) => { m.rotation.x = Math.PI / 2; m.position.set(xAt(2) - 1.6, -0.55, side * 0.85); });
     });
+    }
 
     /* ----- Views ----- */
     const VIEWS = {
