@@ -8,10 +8,14 @@
 <meta property="og:title" content="Aerostructures Site Twin · interactive 3D dashboard">
 <meta property="og:description" content="A 3D plant map shows which departments are on target and where friction slows the line. Click into final assembly to inspect the fuselage pulse line. Concept demo with made-up data.">
 <meta property="og:type" content="website">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
+/* Fonts are self-hosted (SIL Open Font License): no request leaves this site. */
+@font-face { font-family: "Barlow Semi Condensed"; font-weight: 500; font-display: swap; src: url("fonts/barlow-semi-condensed-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-weight: 400; font-display: swap; src: url("fonts/ibm-plex-sans-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-weight: 500; font-display: swap; src: url("fonts/ibm-plex-sans-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Sans"; font-weight: 600; font-display: swap; src: url("fonts/ibm-plex-sans-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 400; font-display: swap; src: url("fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-weight: 500; font-display: swap; src: url("fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2"); }
 /* Layout: hangar-at-night blueprint. Header, a full-width 3D stage (site map or pulse line) with an inspector, then the dashboard. */
 :root {
   --bg: #0a0f13;
@@ -206,7 +210,10 @@ td.mono { font: 12.5px var(--f-mono); }
 .r { text-align: right; }
 td.late { color: var(--warn); }
 .empty { color: var(--muted); padding: 16px 10px; }
-.foot { margin: 0; color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 18px; }
+.foot { color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 18px; display: grid; gap: 8px; max-width: 90ch; }
+.foot p { margin: 0; }
+.foot b { color: var(--fg); font-weight: 500; }
+.foot a { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
@@ -227,24 +234,6 @@ td.late { color: var(--warn); }
     </div>
     <aside class="inspector" id="inspector" aria-live="polite"></aside>
   </section>
-
-  <div class="part" id="site">
-    <div class="part-head"><span class="k">Site</span><h2>Departments and friction</h2></div>
-    <section class="section">
-      <div class="sec-head">
-        <h3>Department health</h3>
-        <p class="sub">Each department against its own target. Red means below target.</p>
-      </div>
-      <div class="depts" id="depts"></div>
-    </section>
-    <div class="card">
-      <div class="sec-head">
-        <h3>Friction points</h3>
-        <p class="sub">Where one department is slowing another, with line hours lost over the last 8 weeks. The arrow points to the department that waits.</p>
-      </div>
-      <div class="frictions" id="frictions"></div>
-    </div>
-  </div>
 
   <div class="part" id="line">
     <div class="part-head"><span class="k">Final assembly</span><h2>Fuselage pulse line</h2></div>
@@ -318,12 +307,34 @@ td.late { color: var(--warn); }
     </div>
   </div>
 
-  <p class="foot">Concept demo. The plant, the departments and every number on this page are made up. No reference to real programs, manufacturers or aircraft.</p>
+  <div class="part" id="site">
+    <div class="part-head"><span class="k">Site</span><h2>Departments and friction</h2></div>
+    <section class="section">
+      <div class="sec-head">
+        <h3>Department health</h3>
+        <p class="sub">Each department against its own target. Red means below target.</p>
+      </div>
+      <div class="depts" id="depts"></div>
+    </section>
+    <div class="card">
+      <div class="sec-head">
+        <h3>Friction points</h3>
+        <p class="sub">Where one department is slowing another, with line hours lost over the last 8 weeks. The arrow points to the department that waits.</p>
+      </div>
+      <div class="frictions" id="frictions"></div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <p><b>Concept demo.</b> The plant, departments, stations, people counts and every number on this page are fictional and were generated for illustration. Any resemblance to a real company, program, product or aircraft is coincidental. Not affiliated with or endorsed by any manufacturer. Provided as is, for demonstration only; it is not engineering, quality or business advice.</p>
+    <p><b>Privacy.</b> This page sets no cookies, uses no analytics or tracking, and loads nothing from third-party servers: fonts and libraries are served from this site. It is hosted on GitHub Pages, which may log technical data such as IP addresses under the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub General Privacy Statement</a>.</p>
+    <p>Built with <a href="https://threejs.org">three.js</a> (MIT) and <a href="https://d3js.org">d3</a> (ISC), with IBM Plex and Barlow fonts (SIL Open Font License). See <a href="https://github.com/demartinogiuseppe/aerostructures-site-twin/blob/main/THIRD_PARTY_NOTICES.md">third-party notices</a>.</p>
+  </footer>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="vendor/d3.min.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
 <script>
 const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_completed": 4, "fpy": 0.872, "takt_adherence": 0.71, "open_ncrs": 31, "traveled_work_hours": 412, "on_time_delivery": 0.8}, {"week": "W34", "week_start": "2026-08-17", "sections_completed": 5, "fpy": 0.881, "takt_adherence": 0.75, "open_ncrs": 29, "traveled_work_hours": 386, "on_time_delivery": 1.0}, {"week": "W35", "week_start": "2026-08-24", "sections_completed": 3, "fpy": 0.869, "takt_adherence": 0.73, "open_ncrs": 33, "traveled_work_hours": 431, "on_time_delivery": 0.75}, {"week": "W36", "week_start": "2026-08-31", "sections_completed": 5, "fpy": 0.894, "takt_adherence": 0.8, "open_ncrs": 27, "traveled_work_hours": 352, "on_time_delivery": 1.0}, {"week": "W37", "week_start": "2026-09-07", "sections_completed": 4, "fpy": 0.902, "takt_adherence": 0.78, "open_ncrs": 26, "traveled_work_hours": 340, "on_time_delivery": 1.0}, {"week": "W38", "week_start": "2026-09-14", "sections_completed": 5, "fpy": 0.897, "takt_adherence": 0.84, "open_ncrs": 24, "traveled_work_hours": 298, "on_time_delivery": 0.83}, {"week": "W39", "week_start": "2026-09-21", "sections_completed": 5, "fpy": 0.911, "takt_adherence": 0.86, "open_ncrs": 22, "traveled_work_hours": 271, "on_time_delivery": 1.0}, {"week": "W40", "week_start": "2026-09-28", "sections_completed": 6, "fpy": 0.918, "takt_adherence": 0.83, "open_ncrs": 23, "traveled_work_hours": 289, "on_time_delivery": 1.0}, {"week": "W41", "week_start": "2026-10-05", "sections_completed": 5, "fpy": 0.924, "takt_adherence": 0.88, "open_ncrs": 19, "traveled_work_hours": 236, "on_time_delivery": 1.0}], "stations": [{"station": "S1", "name": "Panel join", "section": "SEC-142", "progress": 0.92, "actual_hours": 318, "standard_hours": 300, "status": "On track", "note": "Longitudinal riveting almost complete"}, {"station": "S2", "name": "Frames and stringers", "section": "SEC-141", "progress": 0.64, "actual_hours": 402, "standard_hours": 360, "status": "Delayed", "note": "2 NCRs on frames awaiting disposition"}, {"station": "S3", "name": "Electrical installation", "section": "SEC-140", "progress": 0.81, "actual_hours": 275, "standard_hours": 290, "status": "On track", "note": "Harnesses routed, continuity test tomorrow"}, {"station": "S4", "name": "Systems and piping", "section": "SEC-139", "progress": 0.38, "actual_hours": 344, "standard_hours": 250, "status": "Stopped", "note": "Shortage: hydraulic bracket kit"}, {"station": "S5", "name": "Test and close-out", "section": "SEC-138", "progress": 0.97, "actual_hours": 188, "standard_hours": 200, "status": "On track", "note": "Final inspection and FOD check"}], "causes": [{"cause": "Parts shortage", "hours_lost": 186}, {"cause": "NCR awaiting disposition", "hours_lost": 142}, {"cause": "Waiting for quality inspection", "hours_lost": 97}, {"cause": "Tooling unavailable", "hours_lost": 71}, {"cause": "Engineering changes", "hours_lost": 54}, {"cause": "Certified staff absent", "hours_lost": 38}, {"cause": "Other", "hours_lost": 22}], "ncrs": [{"ncr": "NCR-26-1200", "opened_on": "2026-10-08", "station": "S2", "part": "Frame", "defect": "Insufficient edge distance", "disposition": "Rework", "status": "Closed", "days_open": 1}, {"ncr": "NCR-26-1183", "opened_on": "2026-10-04", "station": "S2", "part": "Stringer", "defect": "Excessive gap at joint", "disposition": "Pending", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1187", "opened_on": "2026-10-04", "station": "S1", "part": "Splice clip", "defect": "Missing sealant", "disposition": "Use as is", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1191", "opened_on": "2026-10-04", "station": "S3", "part": "Harness support", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1193", "opened_on": "2026-10-04", "station": "S5", "part": "Skin panel", "defect": "Non-conforming rivet", "disposition": "Pending", "status": "Open", "days_open": 5}, {"ncr": "NCR-26-1188", "opened_on": "2026-10-01", "station": "S2", "part": "Harness support", "defect": "Hole out of tolerance", "disposition": "Use as is", "status": "Open", "days_open": 8}, {"ncr": "NCR-26-1185", "opened_on": "2026-09-29", "station": "S2", "part": "Frame", "defect": "Missing sealant", "disposition": "Pending", "status": "Open", "days_open": 10}, {"ncr": "NCR-26-1189", "opened_on": "2026-09-29", "station": "S1", "part": "Harness support", "defect": "Hole out of tolerance", "disposition": "Repair", "status": "Closed", "days_open": 10}, {"ncr": "NCR-26-1196", "opened_on": "2026-09-27", "station": "S3", "part": "Doubler", "defect": "Non-conforming rivet", "disposition": "Scrap", "status": "Open", "days_open": 12}, {"ncr": "NCR-26-1180", "opened_on": "2026-09-26", "station": "S3", "part": "Splice clip", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1181", "opened_on": "2026-09-26", "station": "S4", "part": "Skin panel", "defect": "Insufficient edge distance", "disposition": "Pending", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1198", "opened_on": "2026-09-26", "station": "S2", "part": "Harness support", "defect": "Excessive gap at joint", "disposition": "Pending", "status": "Open", "days_open": 13}, {"ncr": "NCR-26-1192", "opened_on": "2026-09-21", "station": "S3", "part": "Door surround", "defect": "Scratch on surface treatment", "disposition": "Rework", "status": "Closed", "days_open": 18}, {"ncr": "NCR-26-1201", "opened_on": "2026-09-21", "station": "S2", "part": "Frame", "defect": "Insufficient edge distance", "disposition": "Repair", "status": "Closed", "days_open": 18}, {"ncr": "NCR-26-1195", "opened_on": "2026-09-19", "station": "S2", "part": "Systems bracket", "defect": "Torque out of spec", "disposition": "Pending", "status": "Open", "days_open": 20}, {"ncr": "NCR-26-1184", "opened_on": "2026-09-18", "station": "S1", "part": "Skin panel", "defect": "Torque out of spec", "disposition": "Use as is", "status": "Closed", "days_open": 21}, {"ncr": "NCR-26-1182", "opened_on": "2026-09-17", "station": "S1", "part": "Doubler", "defect": "Scratch on surface treatment", "disposition": "Pending", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1190", "opened_on": "2026-09-17", "station": "S2", "part": "Skin panel", "defect": "Non-conforming rivet", "disposition": "Use as is", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1194", "opened_on": "2026-09-17", "station": "S3", "part": "Frame", "defect": "Torque out of spec", "disposition": "Use as is", "status": "Open", "days_open": 22}, {"ncr": "NCR-26-1197", "opened_on": "2026-09-17", "station": "S5", "part": "Systems bracket", "defect": "Excessive gap at joint", "disposition": "Rework", "status": "Closed", "days_open": 22}, {"ncr": "NCR-26-1186", "opened_on": "2026-09-15", "station": "S1", "part": "Frame", "defect": "Non-conforming rivet", "disposition": "Repair", "status": "Closed", "days_open": 24}, {"ncr": "NCR-26-1199", "opened_on": "2026-09-14", "station": "S4", "part": "Stringer", "defect": "Insufficient edge distance", "disposition": "Repair", "status": "Closed", "days_open": 25}], "depts": [{"id": "ASM", "name": "Final assembly", "metric": "Takt adherence", "value": 0.88, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 214, "note": "Fuselage pulse line, 5 stations. S4 stopped for missing parts.", "kind": "hangar", "x": 0, "z": -1, "w": 11, "d": 6.5, "h": 4.2}, {"id": "MCH", "name": "Machining", "metric": "OEE", "value": 0.78, "target": 0.75, "unit": "pct", "higher_is_better": true, "headcount": 96, "note": "5-axis cells running two shifts.", "kind": "box", "x": -14, "z": -7, "w": 6, "d": 5, "h": 2.2}, {"id": "CMP", "name": "Composites", "metric": "First pass yield", "value": 0.81, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 88, "note": "Porosity scrap on autoclave cycle 3.", "kind": "autoclave", "x": -3, "z": -11, "w": 7, "d": 3.6, "h": 2.6}, {"id": "SRF", "name": "Surface treatment", "metric": "On-time output", "value": 0.96, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 34, "note": "Anodizing line on plan.", "kind": "box", "x": 9, "z": -10.5, "w": 5, "d": 4, "h": 2.0}, {"id": "PNT", "name": "Paint", "metric": "On-time output", "value": 0.97, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 41, "note": "Booth 2 back from maintenance.", "kind": "box", "x": 15, "z": -2, "w": 5, "d": 6, "h": 2.8}, {"id": "LOG", "name": "Logistics", "metric": "Kit completeness", "value": 0.95, "target": 0.95, "unit": "pct", "higher_is_better": true, "headcount": 57, "note": "Kits complete except hydraulic brackets.", "kind": "box", "x": -14, "z": 8, "w": 7, "d": 5, "h": 2.4}, {"id": "QUA", "name": "Quality", "metric": "NCR disposition time", "value": 6.2, "target": 3.0, "unit": "days", "higher_is_better": false, "headcount": 39, "note": "Disposition backlog on frames and panels.", "kind": "office", "x": 3, "z": 9.5, "w": 5, "d": 3.5, "h": 2.2}, {"id": "ENG", "name": "Engineering", "metric": "Changes released on time", "value": 0.92, "target": 0.9, "unit": "pct", "higher_is_better": true, "headcount": 63, "note": "3 changes in work on systems routing.", "kind": "office", "x": 12, "z": 9, "w": 5, "d": 4, "h": 3.4}], "frictions": [{"id": "F1", "from": "LOG", "to": "ASM", "issue": "Parts shortage", "hours_lost": 186, "detail": "Hydraulic bracket kits not delivered to station S4."}, {"id": "F2", "from": "QUA", "to": "ASM", "issue": "NCRs awaiting disposition", "hours_lost": 142, "detail": "Frames at S2 waiting for a disposition decision."}, {"id": "F3", "from": "CMP", "to": "QUA", "issue": "Panels held for porosity review", "hours_lost": 64, "detail": "Composite panels queued for ultrasonic inspection."}, {"id": "F4", "from": "ENG", "to": "ASM", "issue": "Late engineering changes", "hours_lost": 54, "detail": "Systems routing change released after S4 had started."}]};
 
@@ -350,17 +361,18 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
   const LINE_DEPT = 'ASM';
 
   /* state: view is 'site' or 'line'; sel is {type: 'dept'|'friction'|'station', id} or null */
-  const state = { view: 'site', sel: null };
+  const state = { view: 'line', sel: null };
   let scene3d = null;
 
   /* ---------- Header ---------- */
   (function summary() {
     const p = $('#summary');
     const b = (t) => el('b', null, t);
+    const stop = stations.find((s) => s.status === 'Stopped') || stations.find((s) => s.status === 'Delayed');
     const below = depts.filter((d) => d.status === 'Below target');
-    const top = frictions.slice().sort((a, z) => z.hours_lost - a.hours_lost)[0];
-    p.append(b(below.length + ' of ' + depts.length + ' departments'), ' are below target this week. The biggest friction runs from ',
-      b(deptById[top.from].name + ' to ' + deptById[top.to].name), ': ', b(int(top.hours_lost) + ' h'), ' of line time lost to ' + top.issue.toLowerCase() + '. Click a building to inspect it, or enter final assembly to see the pulse line.');
+    p.append('Week ', b(last.week), ': first pass yield at ', b(pct1(last.fpy)), ' and ', b(pct0(last.takt_adherence)), ' of station moves on takt.');
+    if (stop) p.append(' Bottleneck: ', b(stop.station + ' ' + stop.name), '. ' + stop.note + '.');
+    p.append(' Click a fuselage section to inspect its station, or open the site map to see which of the ', b(below.length + ' departments below target'), ' are slowing the line.');
   })();
 
   /* ---------- Selection and views ---------- */
@@ -397,11 +409,13 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
     const crumbs = $('#crumbs');
     crumbs.textContent = '';
     if (state.view === 'line') {
-      const back = button(null, '← Site map');
-      back.addEventListener('click', () => { setView('site'); select('dept', LINE_DEPT); });
-      crumbs.append(back, el('span', null, 'Final assembly · Pulse line'));
+      const go = button(null, 'Site map →');
+      go.addEventListener('click', () => select('dept', LINE_DEPT));
+      crumbs.append(el('span', null, 'Final assembly · Pulse line'), go);
     } else {
-      crumbs.append(el('span', null, 'Site map'));
+      const back = button(null, '← Pulse line');
+      back.addEventListener('click', () => setView('line'));
+      crumbs.append(back, el('span', null, 'Site map'));
     }
     const lg = $('#legend3d');
     lg.textContent = '';
@@ -458,6 +472,9 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
       box.append(el('div', 'insp-code', 'Final assembly · Pulse line'), el('div', 'insp-name', stations.length + ' stations, ' + (counts.get('Stopped') || 0) + ' stopped'));
       box.append(kvList([['On track', String(counts.get('On track') || 0)], ['Delayed', String(counts.get('Delayed') || 0)], ['Stopped', String(counts.get('Stopped') || 0)], ['Takt adherence', pct0(last.takt_adherence) + ' in ' + last.week]]));
       box.append(el('p', 'sub', 'Each fuselage section sits at one station. Click a section, or a station below, to inspect it.'));
+      const go = button('btn', 'See the whole site →');
+      go.addEventListener('click', () => select('dept', LINE_DEPT));
+      box.append(go);
       return;
     }
     if (sel.type === 'dept') {
@@ -914,7 +931,7 @@ const DATA = {"kpis": [{"week": "W33", "week_start": "2026-08-10", "sections_com
       viewStart = performance.now();
       controls.update();
     }
-    applyView('site');
+    applyView('line');
 
     /* ----- Picking ----- */
     const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
